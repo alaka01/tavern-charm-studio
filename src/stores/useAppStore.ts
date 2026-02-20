@@ -1,33 +1,39 @@
 import { create } from 'zustand';
-import type { TabId, CharacterConfig, StatusPanelConfig, StatusField, TextEffectRule, FlipCardConfig, ExportSettings, FormatPromptConfig, FormatPromptCharacter } from '@/types';
+import type { TabId, CharacterConfig, StatusPanelConfig, StatusField, TextEffectRule, FlipCardConfig, ExportSettings, FormatPromptConfig, FormatPromptCharacter, GroupConfig } from '@/types';
 
 const uuid = () => crypto.randomUUID();
 
-const defaultCharacter = (): CharacterConfig => ({
+const THEME_COLORS = ['#f472b6', '#38bdf8', '#34d399', '#fbbf24', '#a78bfa', '#fb7185', '#2dd4bf', '#e2e8f0'];
+
+const defaultCharacter = (index = 0): CharacterConfig => ({
   id: uuid(),
   name: '角色名',
   triggerFormat: 'braces_cn',
   customRegex: '',
-  bubbleBgColor: 'rgba(255,255,255,0.15)',
+  bubblePreset: 'line',
+  themeColor: THEME_COLORS[index % THEME_COLORS.length],
+  avatarMode: 'none',
+  avatarEmoji: '🌸',
+  bubbleBgColor: 'rgba(255,255,255,0.06)',
   useGradient: false,
   gradientColor2: '#a855f7',
   gradientDirection: '135deg',
-  showBorder: true,
+  showBorder: false,
   borderColor: 'rgba(255,255,255,0.2)',
-  borderRadius: 12,
-  showShadow: true,
+  borderRadius: 8,
+  showShadow: false,
   shadowColor: 'rgba(0,0,0,0.2)',
   shadowBlur: 10,
   maxWidth: 100,
   padding: 12,
   align: 'left',
   nameColor: '#00e5ff',
-  nameFontSize: 14,
+  nameFontSize: 13,
   nameBold: true,
-  showAvatar: true,
-  textColor: '#e0e0e0',
-  textFontSize: 14,
-  lineHeight: 1.6,
+  showAvatar: false,
+  textColor: 'rgba(255,255,255,0.9)',
+  textFontSize: 15,
+  lineHeight: 1.7,
 });
 
 const defaultField = (): StatusField => ({
@@ -35,6 +41,12 @@ const defaultField = (): StatusField => ({
   name: '字段名',
   type: 'text',
   group: '基本信息',
+});
+
+const defaultGroupConfig = (): GroupConfig => ({
+  columns: 0,
+  layout: 'grid',
+  showBorder: true,
 });
 
 const defaultStatusPanel = (): StatusPanelConfig => ({
@@ -53,6 +65,8 @@ const defaultStatusPanel = (): StatusPanelConfig => ({
   valueColor: '#00e5ff',
   labelColor: '#ffffff',
   showGroupTitle: true,
+  groupConfigs: {},
+  groupOrder: ['基本信息', '外观', '状态'],
 });
 
 const defaultTextEffect = (): TextEffectRule => ({
@@ -100,6 +114,9 @@ interface AppState {
   updateField: (id: string, updates: Partial<StatusField>) => void;
   removeField: (id: string) => void;
   setStatusPanel: (config: StatusPanelConfig) => void;
+  getGroupConfig: (group: string) => GroupConfig;
+  updateGroupConfig: (group: string, updates: Partial<GroupConfig>) => void;
+  reorderGroups: (newOrder: string[]) => void;
   textEffects: TextEffectRule[];
   addTextEffect: () => void;
   updateTextEffect: (id: string, updates: Partial<TextEffectRule>) => void;
@@ -118,12 +135,12 @@ interface AppState {
   syncFormatPromptChars: () => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
   activeTab: 'dialog',
   setActiveTab: (tab) => set({ activeTab: tab }),
 
-  characters: [defaultCharacter()],
-  addCharacter: () => set((s) => ({ characters: [...s.characters, defaultCharacter()] })),
+  characters: [defaultCharacter(0)],
+  addCharacter: () => set((s) => ({ characters: [...s.characters, defaultCharacter(s.characters.length)] })),
   updateCharacter: (id, updates) => set((s) => ({
     characters: s.characters.map(c => c.id === id ? { ...c, ...updates } : c),
   })),
@@ -139,12 +156,17 @@ export const useAppStore = create<AppState>((set) => ({
   addField: () => set((s) => ({
     statusPanel: { ...s.statusPanel, fields: [...s.statusPanel.fields, defaultField()] },
   })),
-  updateField: (id, updates) => set((s) => ({
-    statusPanel: {
-      ...s.statusPanel,
-      fields: s.statusPanel.fields.map(f => f.id === id ? { ...f, ...updates } : f),
-    },
-  })),
+  updateField: (id, updates) => set((s) => {
+    const newFields = s.statusPanel.fields.map(f => f.id === id ? { ...f, ...updates } : f);
+    // Auto-update groupOrder when a new group appears
+    const allGroups = new Set(newFields.map(f => f.group));
+    const existingOrder = s.statusPanel.groupOrder || [];
+    const newOrder = [...existingOrder.filter(g => allGroups.has(g))];
+    allGroups.forEach(g => { if (!newOrder.includes(g)) newOrder.push(g); });
+    return {
+      statusPanel: { ...s.statusPanel, fields: newFields, groupOrder: newOrder },
+    };
+  }),
   removeField: (id) => set((s) => ({
     statusPanel: {
       ...s.statusPanel,
@@ -152,6 +174,21 @@ export const useAppStore = create<AppState>((set) => ({
     },
   })),
   setStatusPanel: (config) => set({ statusPanel: config }),
+  getGroupConfig: (group) => {
+    return get().statusPanel.groupConfigs[group] || defaultGroupConfig();
+  },
+  updateGroupConfig: (group, updates) => set((s) => ({
+    statusPanel: {
+      ...s.statusPanel,
+      groupConfigs: {
+        ...s.statusPanel.groupConfigs,
+        [group]: { ...(s.statusPanel.groupConfigs[group] || defaultGroupConfig()), ...updates },
+      },
+    },
+  })),
+  reorderGroups: (newOrder) => set((s) => ({
+    statusPanel: { ...s.statusPanel, groupOrder: newOrder },
+  })),
 
   textEffects: [defaultTextEffect()],
   addTextEffect: () => set((s) => ({ textEffects: [...s.textEffects, defaultTextEffect()] })),
@@ -214,7 +251,6 @@ export const useAppStore = create<AppState>((set) => ({
     names.forEach(name => {
       merged.push(existing.get(name) || { name, needDialog: true, needStatus: true });
     });
-    // Keep manually added chars that aren't from tab1
     s.formatPrompt.characters.forEach(c => {
       if (!names.has(c.name)) merged.push(c);
     });

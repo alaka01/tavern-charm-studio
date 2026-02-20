@@ -16,51 +16,33 @@ function generateSampleText(store: ReturnType<typeof useAppStore.getState>): str
   else if (sep === 'custom') sepChar = formatPrompt.customSeparator || '';
 
   const addSep = (line: string) => sepChar ? `${line}${sepChar}` : line;
-
   const useFlip = formatPrompt.useFlipCard;
 
-  if (useFlip) {
-    lines.push(`<${flipCard.frontTag}>`);
-  }
+  if (useFlip) lines.push(`<${flipCard.frontTag}>`);
 
-  // Narrative
   lines.push(addSep('她缓步走进了房间，目光环顾四周。'));
 
-  // Text effects
   const hasAsterisk = textEffects.some(r => r.matchPattern === 'asterisk');
   const hasCnParens = textEffects.some(r => r.matchPattern === 'cn_parens');
   const hasBrackets = textEffects.some(r => r.matchPattern === 'brackets');
 
   if (hasAsterisk) lines.push(addSep('*不知道他在不在……*'));
 
-  // Dialog
   characters.forEach((char, i) => {
     if (!char.name) return;
     const sampleDialogs = ['你好，好久不见了。', '嗯，好久不见。坐吧。', '今天天气真好呢。'];
     const dialog = sampleDialogs[i % sampleDialogs.length];
     switch (char.triggerFormat) {
-      case 'braces_cn':
-        lines.push(addSep(`{${char.name}："${dialog}"}`));
-        break;
-      case 'braces_en':
-        lines.push(addSep(`{${char.name}: "${dialog}"}`));
-        break;
-      case 'japanese':
-        lines.push(addSep(`${char.name}：「${dialog}」`));
-        break;
-      case 'cn_quotes':
-        lines.push(addSep(`${char.name}：\u201c${dialog}\u201d`));
-        break;
-      default:
-        lines.push(addSep(`{${char.name}："${dialog}"}`));
+      case 'braces_cn': lines.push(addSep(`{${char.name}："${dialog}"}`)); break;
+      case 'braces_en': lines.push(addSep(`{${char.name}: "${dialog}"}`)); break;
+      case 'japanese': lines.push(addSep(`${char.name}：「${dialog}」`)); break;
+      case 'cn_quotes': lines.push(addSep(`${char.name}：\u201c${dialog}\u201d`)); break;
+      default: lines.push(addSep(`{${char.name}："${dialog}"}`));
     }
-    if (i === 0 && hasCnParens) {
-      lines.push(addSep('（房间里弥漫着淡淡的花香。）'));
-    }
+    if (i === 0 && hasCnParens) lines.push(addSep('（房间里弥漫着淡淡的花香。）'));
   });
 
   if (hasBrackets) lines.push(addSep('[系统：好感度 +1]'));
-
   lines.push(addSep('他微微点头，转身望向窗外。'));
 
   if (useFlip) {
@@ -68,7 +50,6 @@ function generateSampleText(store: ReturnType<typeof useAppStore.getState>): str
     lines.push(`<${flipCard.backTag}>`);
   }
 
-  // Status bar
   if (statusPanel.fields.length > 0) {
     statusPanel.fields.forEach(f => {
       let val = '示例值';
@@ -81,10 +62,7 @@ function generateSampleText(store: ReturnType<typeof useAppStore.getState>): str
     });
   }
 
-  if (useFlip) {
-    lines.push(`</${flipCard.backTag}>`);
-  }
-
+  if (useFlip) lines.push(`</${flipCard.backTag}>`);
   if (formatPrompt.useFloorCounter) {
     lines.push(`<${flipCard.numberTag}>${formatPrompt.floorStartNumber}</${flipCard.numberTag}>`);
   }
@@ -97,7 +75,6 @@ function applyRegexScripts(text: string, scripts: ScriptEntry[]): string {
   for (const script of scripts) {
     if (script.disabled) continue;
     try {
-      // Parse /pattern/flags format
       const match = script.findRegex.match(/^\/(.+)\/([gimsuy]*)$/);
       if (!match) continue;
       const regex = new RegExp(match[1], match[2]);
@@ -106,7 +83,6 @@ function applyRegexScripts(text: string, scripts: ScriptEntry[]): string {
       // Skip invalid regex
     }
   }
-  // Convert remaining newlines to <br>
   result = result.replace(/\n/g, '<br>');
   return result;
 }
@@ -123,25 +99,23 @@ export const RegexPreviewPanel = () => {
     return generateSampleText(store);
   }, [characters, statusPanel, textEffects, flipCard, formatPrompt]);
 
-  const currentText = editedText ?? autoText;
-
-  // When autoText changes and user hasn't edited, update
   const displayText = editedText !== null ? editedText : autoText;
 
+  // Scripts in correct execution order: text effects → dialog → separator → status → flip card
   const allScripts = useMemo((): ScriptEntry[] => {
     const scripts: ScriptEntry[] = [];
+    textEffects.forEach(rule => {
+      if (rule.name) scripts.push(buildTextEffectScript(rule, exportSettings));
+    });
     characters.forEach(char => {
       if (char.name) scripts.push(buildDialogScript(char, exportSettings));
     });
+    const sepScript = buildSeparatorScript(formatPrompt.paragraphSeparator, formatPrompt.customSeparator, exportSettings);
+    if (sepScript) scripts.push(sepScript);
     if (statusPanel.fields.length > 0) {
       const script = buildStatusScript(statusPanel, exportSettings);
       if (script) scripts.push(script);
     }
-    textEffects.forEach(rule => {
-      if (rule.name) scripts.push(buildTextEffectScript(rule, exportSettings));
-    });
-    const sepScript = buildSeparatorScript(formatPrompt.paragraphSeparator, formatPrompt.customSeparator, exportSettings);
-    if (sepScript) scripts.push(sepScript);
     scripts.push(buildFlipCardScript(flipCard, exportSettings));
     return scripts;
   }, [characters, statusPanel, textEffects, flipCard, exportSettings, formatPrompt.paragraphSeparator, formatPrompt.customSeparator]);
@@ -157,7 +131,6 @@ export const RegexPreviewPanel = () => {
 
   return (
     <>
-      {/* Toggle button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-6 right-6 z-50 glow-btn !rounded-full !px-4 !py-3 shadow-2xl flex items-center gap-2"
@@ -168,7 +141,6 @@ export const RegexPreviewPanel = () => {
         <span className="text-sm font-medium">预览效果</span>
       </motion.button>
 
-      {/* Panel */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -176,8 +148,8 @@ export const RegexPreviewPanel = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed bottom-20 right-6 z-40 w-[480px] max-w-[calc(100vw-2rem)] max-h-[70vh] flex flex-col glass-panel border border-border shadow-2xl overflow-hidden"
-            style={{ background: 'linear-gradient(180deg, hsl(225 45% 7% / 0.97), hsl(225 37% 10% / 0.97))' }}
+            className="fixed bottom-20 right-6 z-40 w-[520px] max-w-[calc(100vw-2rem)] max-h-[70vh] flex flex-col glass-panel border border-border shadow-2xl overflow-hidden"
+            style={{ background: 'linear-gradient(180deg, #141626ee, #0e1026ee)' }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
@@ -216,15 +188,21 @@ export const RegexPreviewPanel = () => {
                   spellCheck={false}
                 />
               ) : (
-                <div className="p-4 space-y-1">
+                <div className="p-5">
                   <div className="text-[10px] text-muted-foreground mb-3 flex items-center gap-1.5">
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                     实时渲染 · 修改任意配置即可看到效果变化
                   </div>
                   <div
-                    className="prose-preview text-sm leading-relaxed"
+                    className="prose-preview"
                     dangerouslySetInnerHTML={{ __html: renderedHtml }}
-                    style={{ color: '#e0e0e0' }}
+                    style={{
+                      fontSize: 15,
+                      lineHeight: 1.8,
+                      color: 'rgba(255, 255, 255, 0.85)',
+                      letterSpacing: '0.3px',
+                      wordBreak: 'break-word',
+                    }}
                   />
                 </div>
               )}

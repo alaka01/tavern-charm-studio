@@ -7,12 +7,23 @@ export type TriggerFormat = 'braces_cn' | 'braces_en' | 'japanese' | 'cn_quotes'
 export type FieldType = 'text' | 'progress' | 'badge';
 export type MatchPattern = 'asterisk' | 'cn_parens' | 'brackets' | 'strikethrough' | 'custom';
 export type Alignment = 'left' | 'center' | 'right';
+export type AvatarMode = 'none' | 'initial' | 'emoji';
+export type BubblePreset = 'line' | 'card' | 'quote';
+export type GroupLayout = 'grid' | 'label' | 'compact' | 'highlight';
 
 export interface CharacterConfig {
   id: string;
   name: string;
   triggerFormat: TriggerFormat;
   customRegex: string;
+  // Bubble preset
+  bubblePreset: BubblePreset;
+  // Theme color (controls left border + name color)
+  themeColor: string;
+  // Avatar
+  avatarMode: AvatarMode;
+  avatarEmoji: string;
+  // Legacy bubble style fields (used by 'card' preset)
   bubbleBgColor: string;
   useGradient: boolean;
   gradientColor2: string;
@@ -29,7 +40,7 @@ export interface CharacterConfig {
   nameColor: string;
   nameFontSize: number;
   nameBold: boolean;
-  showAvatar: boolean;
+  showAvatar: boolean; // kept for compat but replaced by avatarMode
   textColor: string;
   textFontSize: number;
   lineHeight: number;
@@ -40,6 +51,12 @@ export interface StatusField {
   name: string;
   type: FieldType;
   group: string;
+}
+
+export interface GroupConfig {
+  columns: number; // 0 = use global
+  layout: GroupLayout;
+  showBorder: boolean;
 }
 
 export interface StatusPanelConfig {
@@ -53,6 +70,8 @@ export interface StatusPanelConfig {
   valueColor: string;
   labelColor: string;
   showGroupTitle: boolean;
+  groupConfigs: Record<string, GroupConfig>;
+  groupOrder: string[];
 }
 
 export interface TextEffectRule {

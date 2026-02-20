@@ -8,6 +8,7 @@ import type { ScriptEntry } from '@/types';
 
 interface ScriptWithSource extends ScriptEntry {
   source: string;
+  order: number;
 }
 
 export const ExportCenter = () => {
@@ -17,22 +18,35 @@ export const ExportCenter = () => {
   const [previewScript, setPreviewScript] = useState<ScriptWithSource | null>(null);
   const [showPromptPreview, setShowPromptPreview] = useState(false);
 
+  // Scripts ordered by execution priority:
+  // 1. Text effects  2. Dialog bubbles  3. Separator  4. Status panel  5. Flip card
   const allScripts = useMemo((): ScriptWithSource[] => {
     const scripts: ScriptWithSource[] = [];
-    characters.forEach(char => {
-      if (char.name) scripts.push({ ...buildDialogScript(char, exportSettings), source: '🎨 对话气泡' });
+    let order = 1;
+
+    // 1. Text effects
+    textEffects.forEach(rule => {
+      if (rule.name) scripts.push({ ...buildTextEffectScript(rule, exportSettings), source: '✨ 文字特效', order: order++ });
     });
+
+    // 2. Dialog bubbles
+    characters.forEach(char => {
+      if (char.name) scripts.push({ ...buildDialogScript(char, exportSettings), source: '🎨 对话气泡', order: order++ });
+    });
+
+    // 3. Separator
+    const sepScript = buildSeparatorScript(paragraphSeparator, customSeparator, exportSettings);
+    if (sepScript) scripts.push({ ...sepScript, source: '📝 段落分隔符', order: order++ });
+
+    // 4. Status panel
     if (statusPanel.fields.length > 0) {
       const script = buildStatusScript(statusPanel, exportSettings);
-      if (script) scripts.push({ ...script, source: '📊 状态面板' });
+      if (script) scripts.push({ ...script, source: '📊 状态面板', order: order++ });
     }
-    textEffects.forEach(rule => {
-      if (rule.name) scripts.push({ ...buildTextEffectScript(rule, exportSettings), source: '✨ 文字特效' });
-    });
-    // Separator script (before flip card so | inside content is processed first)
-    const sepScript = buildSeparatorScript(paragraphSeparator, customSeparator, exportSettings);
-    if (sepScript) scripts.push({ ...sepScript, source: '📝 段落分隔符' });
-    scripts.push({ ...buildFlipCardScript(flipCard, exportSettings), source: '📑 翻页卡片' });
+
+    // 5. Flip card (last - wraps already processed content)
+    scripts.push({ ...buildFlipCardScript(flipCard, exportSettings), source: '📑 翻页卡片', order: order++ });
+
     return scripts;
   }, [characters, statusPanel, textEffects, flipCard, exportSettings, paragraphSeparator, customSeparator]);
 
@@ -50,15 +64,13 @@ export const ExportCenter = () => {
   };
 
   const stripSource = (s: ScriptWithSource): ScriptEntry => {
-    const { source, ...rest } = s;
+    const { source, order, ...rest } = s;
     return rest;
   };
 
   const exportAll = async () => {
     const enabled = allScripts.filter(s => isEnabled(s.id)).map(stripSource);
     const jsonStr = JSON.stringify(enabled, null, 2);
-
-    // Always export both as zip
     const JSZip = (await import('jszip')).default;
     const zip = new JSZip();
     zip.file('sillytavern-regex-scripts.json', jsonStr);
@@ -155,6 +167,11 @@ export const ExportCenter = () => {
         </button>
       </div>
 
+      {/* Execution order hint */}
+      <div className="text-xs text-muted-foreground bg-muted/20 rounded-lg p-3 leading-relaxed">
+        💡 脚本按执行顺序排列：文字特效 → 对话气泡 → 段落分隔符 → 状态面板 → 翻页卡片。导入酒馆后请保持此顺序，以确保状态面板内容在翻页卡片包裹前已正确渲染。
+      </div>
+
       {/* Script list */}
       <div className="space-y-2">
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -170,7 +187,10 @@ export const ExportCenter = () => {
                 className="accent-primary flex-shrink-0"
               />
               <div className="min-w-0">
-                <div className="text-sm font-medium truncate">{script.scriptName}</div>
+                <div className="text-sm font-medium truncate">
+                  <span className="text-[10px] text-muted-foreground bg-muted/30 px-1.5 py-0.5 rounded mr-2">#{script.order}</span>
+                  {script.scriptName}
+                </div>
                 <div className="text-xs text-muted-foreground">{script.source}</div>
               </div>
             </div>
