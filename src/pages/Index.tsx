@@ -7,6 +7,7 @@ import { TextEffectTab } from '@/components/tabs/TextEffectTab';
 import { FlipCardTab } from '@/components/tabs/FlipCardTab';
 import { FormatPromptTab } from '@/components/tabs/FormatPromptTab';
 import { ExportCenter } from '@/components/tabs/ExportCenter';
+import { RegexPreviewPanel } from '@/components/shared/RegexPreviewPanel';
 import { useAppStore } from '@/stores/useAppStore';
 
 const TAB_COMPONENTS = {
@@ -40,6 +41,7 @@ const Index = () => {
           </motion.div>
         </AnimatePresence>
       </main>
+      <RegexPreviewPanel />
     </div>
   );
 };
