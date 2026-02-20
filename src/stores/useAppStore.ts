@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { TabId, CharacterConfig, StatusPanelConfig, StatusField, TextEffectRule, FlipCardConfig, ExportSettings, FormatPromptConfig, FormatPromptCharacter, GroupConfig } from '@/types';
+import type { TabId, CharacterConfig, StatusPanelConfig, StatusField, TextEffectRule, FlipCardConfig, ExportSettings, FormatPromptConfig, FormatPromptCharacter, GroupConfig, TypographyConfig, TypographyPreset } from '@/types';
 
 const uuid = () => crypto.randomUUID();
 
@@ -83,6 +83,47 @@ const defaultTextEffect = (): TextEffectRule => ({
   bgColor: 'rgba(255,255,255,0.1)',
 });
 
+const TYPOGRAPHY_PRESETS: Record<Exclude<TypographyPreset, 'custom'>, TypographyConfig> = {
+  claude: {
+    preset: 'claude',
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif",
+    fontSize: 15, lineHeight: 1.85, letterSpacing: 0.3,
+    textColor: 'rgba(255,255,255,0.85)', textOpacity: 1,
+    textIndent: false, textIndentSize: 0, paragraphSpacing: 12, containerPadding: 20,
+    textShadow: false, textShadowColor: 'rgba(0,229,255,0.08)', textShadowBlur: 8,
+    textAlign: 'justify',
+  },
+  novel: {
+    preset: 'novel',
+    fontFamily: "'Noto Serif SC', 'Source Han Serif SC', Georgia, serif",
+    fontSize: 15.5, lineHeight: 1.75, letterSpacing: 0.5,
+    textColor: 'rgba(255,255,255,0.82)', textOpacity: 1,
+    textIndent: true, textIndentSize: 2, paragraphSpacing: 8, containerPadding: 24,
+    textShadow: false, textShadowColor: 'rgba(0,0,0,0.1)', textShadowBlur: 4,
+    textAlign: 'justify',
+  },
+  lightweight: {
+    preset: 'lightweight',
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif",
+    fontSize: 14.5, lineHeight: 1.65, letterSpacing: 0.2,
+    textColor: 'rgba(255,255,255,0.80)', textOpacity: 1,
+    textIndent: false, textIndentSize: 0, paragraphSpacing: 6, containerPadding: 14,
+    textShadow: false, textShadowColor: 'rgba(0,0,0,0.1)', textShadowBlur: 4,
+    textAlign: 'left',
+  },
+  cyber: {
+    preset: 'cyber',
+    fontFamily: "'Space Grotesk', 'Noto Sans SC', monospace, sans-serif",
+    fontSize: 14.5, lineHeight: 1.7, letterSpacing: 0.8,
+    textColor: 'rgba(224,240,255,0.88)', textOpacity: 1,
+    textIndent: false, textIndentSize: 0, paragraphSpacing: 10, containerPadding: 18,
+    textShadow: true, textShadowColor: 'rgba(0,229,255,0.08)', textShadowBlur: 8,
+    textAlign: 'left',
+  },
+};
+
+export { TYPOGRAPHY_PRESETS };
+
 const defaultFlipCard = (): FlipCardConfig => ({
   frontTag: 'system-card',
   backTag: 'state',
@@ -98,6 +139,7 @@ const defaultFlipCard = (): FlipCardConfig => ({
   borderRadius: 10,
   padding: 12,
   flipHint: '👆点击翻面',
+  typography: { ...TYPOGRAPHY_PRESETS.claude },
 });
 
 interface AppState {
