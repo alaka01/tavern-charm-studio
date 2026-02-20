@@ -1,4 +1,8 @@
-export type TabId = 'dialog' | 'status' | 'textEffect' | 'flipCard' | 'export';
+export type TabId = 'dialog' | 'status' | 'textEffect' | 'flipCard' | 'formatPrompt' | 'export';
+export type PromptLanguage = 'en' | 'zh' | 'bilingual';
+export type PromptTone = 'strict' | 'gentle' | 'concise';
+export type PlacementSuggestion = 'system' | 'author_note' | 'world_info';
+export type ParagraphSeparator = 'pipe' | 'hr' | 'none' | 'custom';
 export type TriggerFormat = 'braces_cn' | 'braces_en' | 'japanese' | 'cn_quotes' | 'custom';
 export type FieldType = 'text' | 'progress' | 'badge';
 export type MatchPattern = 'asterisk' | 'cn_parens' | 'brackets' | 'strikethrough' | 'custom';
@@ -86,6 +90,24 @@ export interface ExportSettings {
   placement: number[];
   markdownOnly: boolean;
   runOnEdit: boolean;
+}
+
+export interface FormatPromptCharacter {
+  name: string;
+  needDialog: boolean;
+  needStatus: boolean;
+}
+
+export interface FormatPromptConfig {
+  language: PromptLanguage;
+  tone: PromptTone;
+  placementSuggestion: PlacementSuggestion;
+  characters: FormatPromptCharacter[];
+  useFlipCard: boolean;
+  paragraphSeparator: ParagraphSeparator;
+  customSeparator: string;
+  useFloorCounter: boolean;
+  floorStartNumber: number;
 }
 
 export interface ScriptEntry {
