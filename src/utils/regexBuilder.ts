@@ -317,16 +317,29 @@ export function buildFlipCardScript(config: FlipCardConfig, settings: ExportSett
 
   const findRegex = `/<${ft}>([\\s\\S]*?)<\\/${ft}>\\s*<${bt}>([\\s\\S]*?)<\\/${bt}>\\s*<${nt}>([\\s\\S]*?)<\\/${nt}>/`;
 
-  const frontStyle = `width:100%;justify-content:center;align-items:center;word-wrap:break-word;font-size:${config.fontSize}px;color:${config.textColor};padding:${config.padding}px;border-radius:${config.borderRadius}px;cursor:pointer`;
+  const t = config.typography;
+  const typoStyles = [
+    `font-family:${t.fontFamily}`,
+    `font-size:${t.fontSize}px`,
+    `line-height:${t.lineHeight}`,
+    `letter-spacing:${t.letterSpacing}px`,
+    `color:${t.textColor}`,
+    `word-break:break-word`,
+    t.textAlign !== 'left' ? `text-align:${t.textAlign}` : '',
+    t.textIndent ? `text-indent:${t.textIndentSize}em` : '',
+    t.textShadow ? `text-shadow:0 0 ${t.textShadowBlur}px ${t.textShadowColor}` : '',
+    `padding:${t.containerPadding}px ${t.containerPadding + 4}px`,
+  ].filter(Boolean).join(';');
+
+  const frontStyle = `width:100%;justify-content:center;align-items:center;word-wrap:break-word;border-radius:${config.borderRadius}px;cursor:pointer`;
   const frontBg = `background:linear-gradient(${config.frontGradientDir},${config.frontBg1},${config.frontBg2})`;
   const backBg = `background:linear-gradient(${config.backGradientDir},${config.backBg1},${config.backBg2})`;
 
   const hint = config.flipHint
-    ? `<div style="text-align:center;font-size:12px;opacity:0.5;margin-top:8px">${config.flipHint}</div>`
+    ? `<div style="text-align:center;font-size:12px;opacity:0.4;margin-top:12px">${config.flipHint}</div>`
     : '';
 
-  // Front gets extra padding for readability
-  const replaceString = `<style>.radio{display:none}.f1$3,.f2$3{display:flex;${frontStyle}}.f1$3{${frontBg}}.f2$3{${backBg}}.r1$3:checked~.f1$3{display:flex}.r1$3:checked~.f2$3{display:none}.r2$3:checked~.f1$3{display:none}.r2$3:checked~.f2$3{display:flex}</style><div><input type="radio" id="R1$3" name="o$3" class="radio r1$3" checked><input type="radio" id="R2$3" name="o$3" class="radio r2$3"><div class="f1$3"><label for="R2$3" style="width:100%;cursor:pointer"><div style="padding:16px 20px;font-size:15px;line-height:1.8;color:rgba(255,255,255,0.85);letter-spacing:0.3px;word-break:break-word">$1${hint}</div></label></div><div class="f2$3"><label for="R1$3" style="width:100%;cursor:pointer"><div style="padding:16px 20px">$2${hint}</div></label></div></div>`;
+  const replaceString = `<style>.radio{display:none}.f1$3,.f2$3{display:flex;${frontStyle}}.f1$3{${frontBg}}.f2$3{${backBg}}.r1$3:checked~.f1$3{display:flex}.r1$3:checked~.f2$3{display:none}.r2$3:checked~.f1$3{display:none}.r2$3:checked~.f2$3{display:flex}</style><div><input type="radio" id="R1$3" name="o$3" class="radio r1$3" checked><input type="radio" id="R2$3" name="o$3" class="radio r2$3"><div class="f1$3"><label for="R2$3" style="width:100%;cursor:pointer"><div style="${typoStyles}">$1${hint}</div></label></div><div class="f2$3"><label for="R1$3" style="width:100%;cursor:pointer"><div style="padding:${t.containerPadding}px ${t.containerPadding + 4}px">$2${hint}</div></label></div></div>`;
 
   return {
     id: crypto.randomUUID(),

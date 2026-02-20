@@ -10,6 +10,7 @@ export type Alignment = 'left' | 'center' | 'right';
 export type AvatarMode = 'none' | 'initial' | 'emoji';
 export type BubblePreset = 'line' | 'card' | 'quote';
 export type GroupLayout = 'grid' | 'label' | 'compact' | 'highlight';
+export type TypographyPreset = 'claude' | 'novel' | 'lightweight' | 'cyber' | 'custom';
 
 export interface CharacterConfig {
   id: string;
@@ -88,6 +89,24 @@ export interface TextEffectRule {
   bgColor: string;
 }
 
+export interface TypographyConfig {
+  preset: TypographyPreset;
+  fontFamily: string;
+  fontSize: number;
+  lineHeight: number;
+  letterSpacing: number;
+  textColor: string;
+  textOpacity: number;
+  textIndent: boolean;
+  textIndentSize: number;
+  paragraphSpacing: number;
+  containerPadding: number;
+  textShadow: boolean;
+  textShadowColor: string;
+  textShadowBlur: number;
+  textAlign: string;
+}
+
 export interface FlipCardConfig {
   frontTag: string;
   backTag: string;
@@ -103,6 +122,7 @@ export interface FlipCardConfig {
   borderRadius: number;
   padding: number;
   flipHint: string;
+  typography: TypographyConfig;
 }
 
 export interface ExportSettings {
