@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { ChevronDown, Download, Copy, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppStore } from '@/stores/useAppStore';
-import { buildDialogScript, buildStatusScript, buildTextEffectScript, buildFlipCardScript } from '@/utils/regexBuilder';
+import { buildDialogScript, buildStatusScript, buildTextEffectScript, buildFlipCardScript, buildSeparatorScript } from '@/utils/regexBuilder';
 import { generateFormatPrompt } from '@/utils/promptBuilder';
 import type { ScriptEntry } from '@/types';
 
@@ -11,7 +11,7 @@ interface ScriptWithSource extends ScriptEntry {
 }
 
 export const ExportCenter = () => {
-  const { characters, statusPanel, textEffects, flipCard, exportSettings, updateExportSettings, formatPrompt } = useAppStore();
+  const { characters, statusPanel, textEffects, flipCard, exportSettings, updateExportSettings, formatPrompt, formatPrompt: { paragraphSeparator, customSeparator } } = useAppStore();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [disabledIds, setDisabledIds] = useState<Set<string>>(new Set());
   const [previewScript, setPreviewScript] = useState<ScriptWithSource | null>(null);
@@ -29,9 +29,12 @@ export const ExportCenter = () => {
     textEffects.forEach(rule => {
       if (rule.name) scripts.push({ ...buildTextEffectScript(rule, exportSettings), source: '✨ 文字特效' });
     });
+    // Separator script (before flip card so | inside content is processed first)
+    const sepScript = buildSeparatorScript(paragraphSeparator, customSeparator, exportSettings);
+    if (sepScript) scripts.push({ ...sepScript, source: '📝 段落分隔符' });
     scripts.push({ ...buildFlipCardScript(flipCard, exportSettings), source: '📑 翻页卡片' });
     return scripts;
-  }, [characters, statusPanel, textEffects, flipCard, exportSettings]);
+  }, [characters, statusPanel, textEffects, flipCard, exportSettings, paragraphSeparator, customSeparator]);
 
   const promptText = useMemo(() => {
     return generateFormatPrompt({ characters, statusPanel, textEffects, flipCard, config: formatPrompt });

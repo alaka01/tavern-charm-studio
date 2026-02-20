@@ -62,12 +62,12 @@ function getTriggerDesc(char: CharacterConfig, ctx: PromptContext): string {
         `用花括号和英文冒号包裹${char.name}的对话：{${char.name}: "对话内容"}`);
     case 'japanese':
       return L(ctx,
-        `Wrap ${char.name}'s speech in corner brackets: ${char.name}：「dialogue content」`,
-        `用日式书名号包裹${char.name}的对话：${char.name}：「对话内容」`);
+        `${char.name}'s dialogue ${emphasis(ctx, 'must')} use this exact format — the character name and colon before the brackets are ${emphasis(ctx, 'mandatory')} and cannot be omitted:\n  ${char.name}：「dialogue content」\n\n  Wrong (forbidden): 「dialogue content」 (missing character name)\n  Wrong (forbidden): ${char.name}：dialogue content (missing brackets)`,
+        `${char.name}的对话必须使用以下格式，角色名和冒号不可省略：\n  ${char.name}：「对话内容」\n\n  错误格式（禁止）：「对话内容」（缺少角色名）\n  错误格式（禁止）：${char.name}：对话内容（缺少书名号）`);
     case 'cn_quotes':
       return L(ctx,
-        `Wrap ${char.name}'s speech in Chinese double quotes: ${char.name}：\u201c dialogue content\u201d`,
-        `用中文双引号包裹${char.name}的对话：${char.name}：\u201c对话内容\u201d`);
+        `${char.name}'s dialogue ${emphasis(ctx, 'must')} use this exact format — the character name and colon before the quotes are ${emphasis(ctx, 'mandatory')} and cannot be omitted:\n  ${char.name}：\u201cdialogue content\u201d\n\n  Wrong (forbidden): \u201cdialogue content\u201d (missing character name)`,
+        `${char.name}的对话必须使用以下格式，角色名和冒号不可省略：\n  ${char.name}：\u201c对话内容\u201d\n\n  错误格式（禁止）：\u201c对话内容\u201d（缺少角色名）`);
     case 'custom':
       return L(ctx,
         `For ${char.name}'s speech, use custom format matching regex: ${char.customRegex}`,
@@ -112,6 +112,8 @@ function buildDialogSection(ctx: PromptContext): string {
       lines.push(`{${n1}："你好，很高兴认识你。"}`);
     } else if (fmt === 'japanese') {
       lines.push(`${n1}：「你好，很高兴认识你。」`);
+    } else if (fmt === 'cn_quotes') {
+      lines.push(`${n1}：\u201c你好，很高兴认识你。\u201d`);
     } else {
       lines.push(`{${n1}: "你好，很高兴认识你。"}`);
     }
@@ -234,6 +236,7 @@ function buildExampleSection(ctx: PromptContext): string {
     const fmt = cc?.triggerFormat || 'braces_cn';
     if (fmt === 'braces_cn') lines.push(addSep(`{${n}："你好，好久不见了。"}`));
     else if (fmt === 'japanese') lines.push(addSep(`${n}：「你好，好久不见了。」`));
+    else if (fmt === 'cn_quotes') lines.push(addSep(`${n}：\u201c你好，好久不见了。\u201d`));
     else lines.push(addSep(`{${n}: "你好，好久不见了。"}`));
   }
 
@@ -244,6 +247,8 @@ function buildExampleSection(ctx: PromptContext): string {
     const cc = charConfigs.get(n);
     const fmt = cc?.triggerFormat || 'braces_cn';
     if (fmt === 'braces_cn') lines.push(addSep(`{${n}："嗯，好久不见。坐吧。"}`));
+    else if (fmt === 'japanese') lines.push(addSep(`${n}：「嗯，好久不见。坐吧。」`));
+    else if (fmt === 'cn_quotes') lines.push(addSep(`${n}：\u201c嗯，好久不见。坐吧。\u201d`));
     else lines.push(addSep(`{${n}: "嗯，好久不见。坐吧。"}`));
   }
 

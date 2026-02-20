@@ -16,10 +16,10 @@ export function buildDialogScript(char: CharacterConfig, settings: ExportSetting
       findRegex = `/\\{${name}:\\s*([^}]*)\\}/g`;
       break;
     case 'japanese':
-      findRegex = `/「([^」]*)」/g`;
+      findRegex = `/([^|>\\n]+?)[：:]\\s*「([^」]*)」/g`;
       break;
     case 'cn_quotes':
-      findRegex = `/\u201c([^\u201d]*)\u201d/g`;
+      findRegex = `/([^|>\\n]+?)[：:]\\s*\u201c([^\u201d]*)\u201d/g`;
       break;
     case 'custom':
       findRegex = char.customRegex || '/(?:)/g';
@@ -68,7 +68,11 @@ export function buildDialogScript(char: CharacterConfig, settings: ExportSetting
     ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:${char.nameColor};color:#000;font-size:12px;font-weight:bold">${char.name.charAt(0)}</span>`
     : '';
 
-  const replaceString = `<div style="${bubbleStyle}"><div style="${nameStyle}">${avatarHtml}${char.name}</div><div style="${textStyle}">$1</div></div>`;
+  // For japanese/cn_quotes, $1 is char name, $2 is content; for others $1 is content
+  const isNameCapturing = char.triggerFormat === 'japanese' || char.triggerFormat === 'cn_quotes';
+  const nameDisplay = isNameCapturing ? '$1' : char.name;
+  const contentRef = isNameCapturing ? '$2' : '$1';
+  const replaceString = `<div style="${bubbleStyle}"><div style="${nameStyle}">${avatarHtml}${nameDisplay}</div><div style="${textStyle}">${contentRef}</div></div>`;
 
   return {
     id: crypto.randomUUID(),
@@ -194,6 +198,32 @@ export function buildTextEffectScript(rule: TextEffectRule, settings: ExportSett
   };
 }
 
+export function buildSeparatorScript(separator: string, customSeparator: string, settings: ExportSettings): ScriptEntry | null {
+  let sepChar = '';
+  if (separator === 'pipe') sepChar = '|';
+  else if (separator === 'custom') sepChar = customSeparator;
+  else return null; // 'hr' and 'none' don't need a script
+
+  if (!sepChar) return null;
+
+  const escapedSep = escapeRegex(sepChar);
+  return {
+    id: crypto.randomUUID(),
+    scriptName: '段落分隔符',
+    findRegex: `/${escapedSep}/g`,
+    replaceString: '<br><hr style="width:100%;border:none;border-top:1px solid rgba(255,255,255,0.15);margin:8px 0;">',
+    trimStrings: [],
+    placement: [...settings.placement],
+    disabled: false,
+    markdownOnly: settings.markdownOnly,
+    promptOnly: false,
+    runOnEdit: settings.runOnEdit,
+    substituteRegex: true,
+    minDepth: null,
+    maxDepth: null,
+  };
+}
+
 export function buildFlipCardScript(config: FlipCardConfig, settings: ExportSettings): ScriptEntry {
   const ft = escapeRegex(config.frontTag);
   const bt = escapeRegex(config.backTag);
@@ -201,7 +231,7 @@ export function buildFlipCardScript(config: FlipCardConfig, settings: ExportSett
 
   const findRegex = `/<${ft}>([\\s\\S]*?)<\\/${ft}>\\s*<${bt}>([\\s\\S]*?)<\\/${bt}>\\s*<${nt}>([\\s\\S]*?)<\\/${nt}>/`;
 
-  const frameStyle = `width:100%;display:flex;justify-content:center;align-items:center;word-wrap:break-word;font-size:${config.fontSize}px;color:${config.textColor};padding:${config.padding}px;border-radius:${config.borderRadius}px;cursor:pointer;transition:height 0.3s`;
+  const layoutStyle = `width:100%;justify-content:center;align-items:center;word-wrap:break-word;font-size:${config.fontSize}px;color:${config.textColor};padding:${config.padding}px;border-radius:${config.borderRadius}px;cursor:pointer`;
   const frontBg = `background:linear-gradient(${config.frontGradientDir},${config.frontBg1},${config.frontBg2})`;
   const backBg = `background:linear-gradient(${config.backGradientDir},${config.backBg1},${config.backBg2})`;
 
@@ -209,7 +239,7 @@ export function buildFlipCardScript(config: FlipCardConfig, settings: ExportSett
     ? `<div style="text-align:center;font-size:12px;opacity:0.5;margin-top:8px">${config.flipHint}</div>`
     : '';
 
-  const replaceString = `<style>.radio{display:none}.r1$3:checked~.f1{display:block}.r1$3:checked~.f2{display:none}.r2$3:checked~.f1{display:none}.r2$3:checked~.f2{display:block}</style><div><input type="radio" id="R1$3" name="o$3" class="radio r1$3" checked><input type="radio" id="R2$3" name="o$3" class="radio r2$3"><div class="f1" style="${frameStyle};${frontBg}"><label for="R2$3" style="width:100%;cursor:pointer"><div style="padding:8px;font-weight:bold">$1${hint}</div></label></div><div class="f2" style="${frameStyle};${backBg};display:none"><label for="R1$3" style="width:100%;cursor:pointer"><div style="padding:8px;font-weight:bold">$2${hint}</div></label></div></div>`;
+  const replaceString = `<style>.radio{display:none}.f1$3,.f2$3{display:flex;${layoutStyle}}.f1$3{${frontBg}}.f2$3{${backBg};display:none}.r1$3:checked~.f1$3{display:flex}.r1$3:checked~.f2$3{display:none}.r2$3:checked~.f1$3{display:none}.r2$3:checked~.f2$3{display:flex}</style><div><input type="radio" id="R1$3" name="o$3" class="radio r1$3" checked><input type="radio" id="R2$3" name="o$3" class="radio r2$3"><div class="f1$3"><label for="R2$3" style="width:100%;cursor:pointer"><div style="padding:8px;font-weight:bold">$1${hint}</div></label></div><div class="f2$3"><label for="R1$3" style="width:100%;cursor:pointer"><div style="padding:8px;font-weight:bold">$2${hint}</div></label></div></div>`;
 
   return {
     id: crypto.randomUUID(),
