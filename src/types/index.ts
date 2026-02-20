@@ -105,23 +105,22 @@ export interface TypographyConfig {
   textShadowColor: string;
   textShadowBlur: number;
   textAlign: string;
+  frontBg: string;
+  backBg: string;
 }
 
 export interface FlipCardConfig {
   frontTag: string;
   backTag: string;
   numberTag: string;
-  frontBg1: string;
-  frontBg2: string;
-  frontGradientDir: string;
-  backBg1: string;
-  backBg2: string;
-  backGradientDir: string;
   textColor: string;
   fontSize: number;
   borderRadius: number;
   padding: number;
   flipHint: string;
+  flipHintBack: string;
+  cardBorder: boolean;
+  cardBorderColor: string;
   typography: TypographyConfig;
 }
 

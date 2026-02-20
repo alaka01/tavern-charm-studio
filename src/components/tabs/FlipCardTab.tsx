@@ -6,8 +6,6 @@ import { ColorPicker } from '@/components/shared/ColorPicker';
 import { SliderWithLabel } from '@/components/shared/SliderWithLabel';
 import type { TypographyPreset, TypographyConfig } from '@/types';
 
-const GRADIENT_DIRS = ['135deg', '45deg', '90deg', '180deg', '0deg', '270deg'];
-
 const PRESET_META: { key: Exclude<TypographyPreset, 'custom'>; name: string; desc: string }[] = [
   { key: 'claude', name: 'Claude 风', desc: '宽松舒适，适合长文' },
   { key: 'novel', name: '小说风', desc: '首行缩进，文学质感' },
@@ -40,15 +38,24 @@ function getTypographyStyle(t: TypographyConfig): React.CSSProperties {
   };
 }
 
-// Mini preview lines for preset cards
+// Mini preview lines for preset cards — show bg + text color
 function PresetMiniPreview({ preset }: { preset: TypographyConfig }) {
   const indent = preset.textIndent;
   const gap = Math.max(2, preset.paragraphSpacing / 3);
+  const lineColor = preset.textColor.replace(/[\d.]+\)$/, '0.35)').replace('#', '');
+  const bgIsHex = preset.frontBg.startsWith('#');
+  const barColor = bgIsHex ? preset.textColor.replace(/[\d.]+\)$/, '0.3)') : 'rgba(255,255,255,0.2)';
   return (
-    <div className="mt-2 space-y-px" style={{ lineHeight: preset.lineHeight * 0.6 }}>
+    <div
+      className="mt-2 rounded p-1.5"
+      style={{
+        background: preset.frontBg === 'transparent' ? 'rgba(255,255,255,0.04)' : preset.frontBg,
+        lineHeight: preset.lineHeight * 0.6,
+      }}
+    >
       {[0, 1, 2].map(i => (
         <div key={i} className="flex gap-1" style={{ marginBottom: gap, paddingLeft: indent ? 12 : 0 }}>
-          <div className="h-[3px] rounded-full bg-muted-foreground/30" style={{ width: i === 2 ? '60%' : '90%' }} />
+          <div className="h-[3px] rounded-full" style={{ width: i === 2 ? '60%' : '90%', background: barColor }} />
         </div>
       ))}
       {preset.textShadow && (
@@ -97,34 +104,26 @@ export const FlipCardTab = () => {
           </p>
         </div>
 
-        {/* Card style */}
+        {/* Card style - simplified */}
         <div className="glass-panel p-4 space-y-3">
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">卡片样式</h4>
-          <div className="grid grid-cols-2 gap-3">
-            <ColorPicker label="正面背景色1" value={flipCard.frontBg1} onChange={(v) => updateFlipCard({ frontBg1: v })} />
-            <ColorPicker label="正面背景色2" value={flipCard.frontBg2} onChange={(v) => updateFlipCard({ frontBg2: v })} />
-            <ColorPicker label="背面背景色1" value={flipCard.backBg1} onChange={(v) => updateFlipCard({ backBg1: v })} />
-            <ColorPicker label="背面背景色2" value={flipCard.backBg2} onChange={(v) => updateFlipCard({ backBg2: v })} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">正面渐变方向</label>
-              <select value={flipCard.frontGradientDir} onChange={(e) => updateFlipCard({ frontGradientDir: e.target.value })} className="w-full bg-input border border-border rounded-lg px-2 py-1.5 text-sm text-foreground">
-                {GRADIENT_DIRS.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">背面渐变方向</label>
-              <select value={flipCard.backGradientDir} onChange={(e) => updateFlipCard({ backGradientDir: e.target.value })} className="w-full bg-input border border-border rounded-lg px-2 py-1.5 text-sm text-foreground">
-                {GRADIENT_DIRS.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </div>
-          </div>
-          <ColorPicker label="文字颜色" value={flipCard.textColor} onChange={(v) => updateFlipCard({ textColor: v })} />
           <SliderWithLabel label="圆角" value={flipCard.borderRadius} onChange={(v) => updateFlipCard({ borderRadius: v })} min={0} max={30} unit="px" />
+          <div className="flex items-center justify-between">
+            <label className="text-xs text-muted-foreground">卡片边框</label>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" checked={flipCard.cardBorder} onChange={(e) => updateFlipCard({ cardBorder: e.target.checked })} className="accent-primary" />
+              {flipCard.cardBorder && (
+                <ColorPicker label="" value={flipCard.cardBorderColor} onChange={(v) => updateFlipCard({ cardBorderColor: v })} />
+              )}
+            </div>
+          </div>
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">翻转提示文字</label>
+            <label className="text-xs text-muted-foreground mb-1 block">正面翻转提示</label>
             <input value={flipCard.flipHint} onChange={(e) => updateFlipCard({ flipHint: e.target.value })} className="w-full bg-input border border-border rounded-lg px-3 py-1.5 text-sm text-foreground" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">背面翻转提示</label>
+            <input value={flipCard.flipHintBack} onChange={(e) => updateFlipCard({ flipHintBack: e.target.value })} className="w-full bg-input border border-border rounded-lg px-3 py-1.5 text-sm text-foreground" />
           </div>
         </div>
 
@@ -166,6 +165,8 @@ export const FlipCardTab = () => {
 
           {showCustom && (
             <div className="space-y-3 pt-1">
+              <ColorPicker label="正面背景色" value={typo.frontBg} onChange={(v) => updateTypo({ frontBg: v })} />
+              <ColorPicker label="背面背景色" value={typo.backBg} onChange={(v) => updateTypo({ backBg: v })} />
               <SliderWithLabel label="字号" value={typo.fontSize} onChange={(v) => updateTypo({ fontSize: v })} min={12} max={20} step={0.5} unit="px" />
               <SliderWithLabel label="行高" value={typo.lineHeight} onChange={(v) => updateTypo({ lineHeight: v })} min={1.2} max={2.2} step={0.05} unit="" />
               <SliderWithLabel label="字间距" value={typo.letterSpacing} onChange={(v) => updateTypo({ letterSpacing: v })} min={0} max={2} step={0.1} unit="px" />
@@ -216,10 +217,9 @@ export const FlipCardTab = () => {
             animate={{ rotateY: showFront ? 0 : 180 }}
             transition={{ duration: 0.5, type: 'spring', stiffness: 200 }}
             style={{
-              background: showFront
-                ? `linear-gradient(${flipCard.frontGradientDir}, ${flipCard.frontBg1}, ${flipCard.frontBg2})`
-                : `linear-gradient(${flipCard.backGradientDir}, ${flipCard.backBg1}, ${flipCard.backBg2})`,
+              background: showFront ? typo.frontBg : typo.backBg,
               borderRadius: flipCard.borderRadius,
+              border: flipCard.cardBorder ? `1px solid ${flipCard.cardBorderColor}` : undefined,
               cursor: 'pointer',
               minHeight: 220,
               perspective: 1000,
@@ -231,14 +231,14 @@ export const FlipCardTab = () => {
                   <p key={i} style={{ marginBottom: typo.paragraphSpacing }}>{para}</p>
                 ))}
                 {flipCard.flipHint && (
-                  <div style={{ textAlign: 'center', fontSize: 12, opacity: 0.4, marginTop: 12 }}>{flipCard.flipHint}</div>
+                  <div style={{ textAlign: 'center', fontSize: 11, opacity: 0.35, marginTop: 14 }}>{flipCard.flipHint}</div>
                 )}
               </div>
             ) : (
               <div style={{
                 color: flipCard.textColor,
                 fontSize: flipCard.fontSize,
-                padding: flipCard.padding,
+                padding: `${typo.containerPadding}px ${typo.containerPadding + 4}px`,
                 fontWeight: 'bold',
                 textAlign: 'center',
                 display: 'flex',
@@ -249,8 +249,8 @@ export const FlipCardTab = () => {
                 transform: 'rotateY(180deg)',
               }}>
                 这是卡片背面内容，显示角色状态或隐藏信息。
-                {flipCard.flipHint && (
-                  <div style={{ fontSize: 12, opacity: 0.5, marginTop: 8 }}>{flipCard.flipHint}</div>
+                {flipCard.flipHintBack && (
+                  <div style={{ fontSize: 11, opacity: 0.35, marginTop: 14 }}>{flipCard.flipHintBack}</div>
                 )}
               </div>
             )}

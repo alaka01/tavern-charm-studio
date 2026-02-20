@@ -92,15 +92,17 @@ const TYPOGRAPHY_PRESETS: Record<Exclude<TypographyPreset, 'custom'>, Typography
     textIndent: false, textIndentSize: 0, paragraphSpacing: 12, containerPadding: 20,
     textShadow: false, textShadowColor: 'rgba(0,229,255,0.08)', textShadowBlur: 8,
     textAlign: 'justify',
+    frontBg: '#1a1a2e', backBg: '#1e1e32',
   },
   novel: {
     preset: 'novel',
     fontFamily: "'Noto Serif SC', 'Source Han Serif SC', Georgia, serif",
     fontSize: 15.5, lineHeight: 1.75, letterSpacing: 0.5,
-    textColor: 'rgba(255,255,255,0.82)', textOpacity: 1,
+    textColor: 'rgba(237,224,212,0.88)', textOpacity: 1,
     textIndent: true, textIndentSize: 2, paragraphSpacing: 8, containerPadding: 24,
     textShadow: false, textShadowColor: 'rgba(0,0,0,0.1)', textShadowBlur: 4,
     textAlign: 'justify',
+    frontBg: '#1c1917', backBg: '#1f1c19',
   },
   lightweight: {
     preset: 'lightweight',
@@ -110,6 +112,7 @@ const TYPOGRAPHY_PRESETS: Record<Exclude<TypographyPreset, 'custom'>, Typography
     textIndent: false, textIndentSize: 0, paragraphSpacing: 6, containerPadding: 14,
     textShadow: false, textShadowColor: 'rgba(0,0,0,0.1)', textShadowBlur: 4,
     textAlign: 'left',
+    frontBg: 'transparent', backBg: 'rgba(255,255,255,0.03)',
   },
   cyber: {
     preset: 'cyber',
@@ -119,6 +122,7 @@ const TYPOGRAPHY_PRESETS: Record<Exclude<TypographyPreset, 'custom'>, Typography
     textIndent: false, textIndentSize: 0, paragraphSpacing: 10, containerPadding: 18,
     textShadow: true, textShadowColor: 'rgba(0,229,255,0.08)', textShadowBlur: 8,
     textAlign: 'left',
+    frontBg: '#0a0e1a', backBg: '#0c1024',
   },
 };
 
@@ -128,17 +132,14 @@ const defaultFlipCard = (): FlipCardConfig => ({
   frontTag: 'system-card',
   backTag: 'state',
   numberTag: 'Number-of-layers',
-  frontBg1: '#0A1B3D',
-  frontBg2: '#1C3F8C',
-  frontGradientDir: '135deg',
-  backBg1: '#1a0a3d',
-  backBg2: '#3d1c8c',
-  backGradientDir: '135deg',
   textColor: '#ffffff',
   fontSize: 14,
   borderRadius: 10,
   padding: 12,
-  flipHint: '👆点击翻面',
+  flipHint: '👆 点击查看状态面板',
+  flipHintBack: '👆 点击返回正文',
+  cardBorder: false,
+  cardBorderColor: 'rgba(255,255,255,0.1)',
   typography: { ...TYPOGRAPHY_PRESETS.claude },
 });
 
