@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { TabId, CharacterConfig, StatusPanelConfig, StatusField, TextEffectRule, FlipCardConfig, ExportSettings } from '@/types';
+import type { TabId, CharacterConfig, StatusPanelConfig, StatusField, TextEffectRule, FlipCardConfig, ExportSettings, FormatPromptConfig, FormatPromptCharacter } from '@/types';
 
 const uuid = () => crypto.randomUUID();
 
@@ -110,6 +110,12 @@ interface AppState {
   setFlipCard: (config: FlipCardConfig) => void;
   exportSettings: ExportSettings;
   updateExportSettings: (updates: Partial<ExportSettings>) => void;
+  formatPrompt: FormatPromptConfig;
+  updateFormatPrompt: (updates: Partial<FormatPromptConfig>) => void;
+  updateFormatPromptChar: (name: string, updates: Partial<FormatPromptCharacter>) => void;
+  addFormatPromptChar: (name: string) => void;
+  removeFormatPromptChar: (name: string) => void;
+  syncFormatPromptChars: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -167,4 +173,51 @@ export const useAppStore = create<AppState>((set) => ({
   updateExportSettings: (updates) => set((s) => ({
     exportSettings: { ...s.exportSettings, ...updates },
   })),
+
+  formatPrompt: {
+    language: 'en',
+    tone: 'strict',
+    placementSuggestion: 'system',
+    characters: [],
+    useFlipCard: true,
+    paragraphSeparator: 'pipe',
+    customSeparator: '',
+    useFloorCounter: true,
+    floorStartNumber: 0,
+  },
+  updateFormatPrompt: (updates) => set((s) => ({
+    formatPrompt: { ...s.formatPrompt, ...updates },
+  })),
+  updateFormatPromptChar: (name, updates) => set((s) => ({
+    formatPrompt: {
+      ...s.formatPrompt,
+      characters: s.formatPrompt.characters.map(c => c.name === name ? { ...c, ...updates } : c),
+    },
+  })),
+  addFormatPromptChar: (name) => set((s) => ({
+    formatPrompt: {
+      ...s.formatPrompt,
+      characters: [...s.formatPrompt.characters, { name, needDialog: true, needStatus: true }],
+    },
+  })),
+  removeFormatPromptChar: (name) => set((s) => ({
+    formatPrompt: {
+      ...s.formatPrompt,
+      characters: s.formatPrompt.characters.filter(c => c.name !== name),
+    },
+  })),
+  syncFormatPromptChars: () => set((s) => {
+    const names = new Set<string>();
+    s.characters.forEach(c => { if (c.name) names.add(c.name); });
+    const existing = new Map(s.formatPrompt.characters.map(c => [c.name, c]));
+    const merged: FormatPromptCharacter[] = [];
+    names.forEach(name => {
+      merged.push(existing.get(name) || { name, needDialog: true, needStatus: true });
+    });
+    // Keep manually added chars that aren't from tab1
+    s.formatPrompt.characters.forEach(c => {
+      if (!names.has(c.name)) merged.push(c);
+    });
+    return { formatPrompt: { ...s.formatPrompt, characters: merged } };
+  }),
 }));

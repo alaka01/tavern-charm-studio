@@ -7,6 +7,7 @@ const TABS: { id: TabId; icon: string; label: string }[] = [
   { id: 'status', icon: '📊', label: '状态面板' },
   { id: 'textEffect', icon: '✨', label: '文字特效' },
   { id: 'flipCard', icon: '📑', label: '翻页卡片' },
+  { id: 'formatPrompt', icon: '📝', label: '格式提示词' },
   { id: 'export', icon: '📦', label: '导出中心' },
 ];
 

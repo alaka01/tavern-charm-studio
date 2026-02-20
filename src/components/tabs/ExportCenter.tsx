@@ -3,6 +3,7 @@ import { ChevronDown, Download, Copy, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppStore } from '@/stores/useAppStore';
 import { buildDialogScript, buildStatusScript, buildTextEffectScript, buildFlipCardScript } from '@/utils/regexBuilder';
+import { generateFormatPrompt } from '@/utils/promptBuilder';
 import type { ScriptEntry } from '@/types';
 
 interface ScriptWithSource extends ScriptEntry {
@@ -10,35 +11,31 @@ interface ScriptWithSource extends ScriptEntry {
 }
 
 export const ExportCenter = () => {
-  const { characters, statusPanel, textEffects, flipCard, exportSettings, updateExportSettings } = useAppStore();
+  const { characters, statusPanel, textEffects, flipCard, exportSettings, updateExportSettings, formatPrompt } = useAppStore();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [disabledIds, setDisabledIds] = useState<Set<string>>(new Set());
   const [previewScript, setPreviewScript] = useState<ScriptWithSource | null>(null);
+  const [showPromptPreview, setShowPromptPreview] = useState(false);
 
   const allScripts = useMemo((): ScriptWithSource[] => {
     const scripts: ScriptWithSource[] = [];
-
     characters.forEach(char => {
-      if (char.name) {
-        scripts.push({ ...buildDialogScript(char, exportSettings), source: '🎨 对话气泡' });
-      }
+      if (char.name) scripts.push({ ...buildDialogScript(char, exportSettings), source: '🎨 对话气泡' });
     });
-
     if (statusPanel.fields.length > 0) {
       const script = buildStatusScript(statusPanel, exportSettings);
       if (script) scripts.push({ ...script, source: '📊 状态面板' });
     }
-
     textEffects.forEach(rule => {
-      if (rule.name) {
-        scripts.push({ ...buildTextEffectScript(rule, exportSettings), source: '✨ 文字特效' });
-      }
+      if (rule.name) scripts.push({ ...buildTextEffectScript(rule, exportSettings), source: '✨ 文字特效' });
     });
-
     scripts.push({ ...buildFlipCardScript(flipCard, exportSettings), source: '📑 翻页卡片' });
-
     return scripts;
   }, [characters, statusPanel, textEffects, flipCard, exportSettings]);
+
+  const promptText = useMemo(() => {
+    return generateFormatPrompt({ characters, statusPanel, textEffects, flipCard, config: formatPrompt });
+  }, [characters, statusPanel, textEffects, flipCard, formatPrompt]);
 
   const isEnabled = (id: string) => !disabledIds.has(id);
   const toggleScript = (id: string) => {
@@ -54,7 +51,26 @@ export const ExportCenter = () => {
     return rest;
   };
 
-  const exportAll = () => {
+  const exportAll = async () => {
+    const enabled = allScripts.filter(s => isEnabled(s.id)).map(stripSource);
+    const jsonStr = JSON.stringify(enabled, null, 2);
+
+    // Always export both as zip
+    const JSZip = (await import('jszip')).default;
+    const zip = new JSZip();
+    zip.file('sillytavern-regex-scripts.json', jsonStr);
+    zip.file('format-prompt.txt', promptText);
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sillytavern-export.zip';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('导出成功！已打包下载正则脚本 + 格式提示词');
+  };
+
+  const exportJsonOnly = () => {
     const enabled = allScripts.filter(s => isEnabled(s.id)).map(stripSource);
     const blob = new Blob([JSON.stringify(enabled, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -84,6 +100,22 @@ export const ExportCenter = () => {
     toast.success(`已导出 ${clean.scriptName}`);
   };
 
+  const copyPrompt = async () => {
+    await navigator.clipboard.writeText(promptText);
+    toast.success('已复制提示词到剪贴板！');
+  };
+
+  const downloadPrompt = () => {
+    const blob = new Blob([promptText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'format-prompt.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('提示词已下载！');
+  };
+
   const importJson = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -94,7 +126,7 @@ export const ExportCenter = () => {
       try {
         const text = await file.text();
         const data = JSON.parse(text);
-        toast.success(`成功导入 ${Array.isArray(data) ? data.length : 1} 条正则脚本（请在导出中心查看预览）`);
+        toast.success(`成功导入 ${Array.isArray(data) ? data.length : 1} 条正则脚本`);
       } catch {
         toast.error('导入失败：JSON 格式无效');
       }
@@ -107,7 +139,10 @@ export const ExportCenter = () => {
       {/* Action buttons */}
       <div className="flex flex-wrap gap-3">
         <button onClick={exportAll} className="glow-btn text-sm">
-          <Download size={16} /> 全部导出
+          <Download size={16} /> 全部导出（ZIP）
+        </button>
+        <button onClick={exportJsonOnly} className="glass-panel px-4 py-2 text-sm hover:border-primary transition-colors flex items-center gap-2">
+          <Download size={16} /> 仅导出 JSON
         </button>
         <button onClick={copyAll} className="glass-panel px-4 py-2 text-sm hover:border-primary transition-colors flex items-center gap-2">
           <Copy size={16} /> 复制到剪贴板
@@ -172,6 +207,32 @@ export const ExportCenter = () => {
           </div>
         </div>
       )}
+
+      {/* Format prompt section */}
+      <div className="glass-panel p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setShowPromptPreview(!showPromptPreview)}
+            className="flex items-center gap-2 text-sm font-semibold hover:text-foreground transition-colors"
+          >
+            <ChevronDown size={16} className={`transition-transform ${showPromptPreview ? 'rotate-180' : ''}`} />
+            📝 配套格式提示词
+          </button>
+          <div className="flex gap-2">
+            <button onClick={copyPrompt} className="px-3 py-1 text-xs rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center gap-1">
+              <Copy size={12} /> 复制提示词
+            </button>
+            <button onClick={downloadPrompt} className="px-3 py-1 text-xs rounded-lg bg-muted hover:bg-muted/80 transition-colors flex items-center gap-1">
+              <Download size={12} /> 下载提示词
+            </button>
+          </div>
+        </div>
+        {showPromptPreview && (
+          <pre className="text-xs font-mono bg-muted/20 p-4 rounded-lg whitespace-pre-wrap max-h-60 overflow-y-auto leading-relaxed text-muted-foreground">
+            {promptText}
+          </pre>
+        )}
+      </div>
 
       {/* Advanced settings */}
       <div className="glass-panel p-4">
