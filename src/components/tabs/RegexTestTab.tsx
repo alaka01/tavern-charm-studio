@@ -98,10 +98,11 @@ export const RegexTestTab = () => {
       const matches = [...html.matchAll(new RegExp(regex.source, regex.flags.includes('g') ? regex.flags : regex.flags + 'g'))];
       results.push({ scriptName: script.scriptName, source, matchCount: matches.length });
 
-      // Apply replacement
+      // Apply replacement (use same g-flag as counting)
       if (matches.length > 0) {
         try {
-          const r = new RegExp(regex.source, regex.flags);
+          const flags = regex.flags.includes('g') ? regex.flags : regex.flags + 'g';
+          const r = new RegExp(regex.source, flags);
           html = html.replace(r, script.replaceString);
         } catch { /* skip */ }
       }
