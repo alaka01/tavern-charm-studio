@@ -362,7 +362,7 @@ export const StatusPanelTab = () => {
               renderGroupPreview(groupName, gFields, i === orderedGroups.length - 1)
             )}
           </div>
-          <div className="text-center text-xs text-muted-foreground mt-4 pt-3 border-t border-border">预览效果</div>
+          <div className="text-center text-xs text-muted-foreground mt-4 pt-3 border-t border-border">预览效果 · 双击字段值可编辑</div>
         </div>
       </div>
     </div>
