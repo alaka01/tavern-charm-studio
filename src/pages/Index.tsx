@@ -8,6 +8,7 @@ import { FlipCardTab } from '@/components/tabs/FlipCardTab';
 import { FormatPromptTab } from '@/components/tabs/FormatPromptTab';
 import { ExportCenter } from '@/components/tabs/ExportCenter';
 import { GuideTab } from '@/components/tabs/GuideTab';
+import { RegexTestTab } from '@/components/tabs/RegexTestTab';
 import { RegexPreviewPanel } from '@/components/shared/RegexPreviewPanel';
 import { useAppStore } from '@/stores/useAppStore';
 
