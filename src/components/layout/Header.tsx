@@ -46,6 +46,7 @@ export const Header = () => {
               </button>
             ))}
           </nav>
+          <FullPreviewOverlay />
           <SettingsDrawer />
         </div>
       </div>

@@ -164,11 +164,9 @@ export const StatusPanelTab = () => {
               <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 8px' }}>
                 <span style={{ color: statusPanel.labelColor, fontSize: 13 }}>{f.name}</span>
                 {f.type === 'badge' ? (
-                  <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 12, background: statusPanel.valueColor + '33', color: statusPanel.valueColor, fontSize: 12 }}>
-                    {SAMPLE_VALUES[f.name] || '示例值'}
-                  </span>
+                  <EditableValue fieldName={f.name} value={getSample(f.name)} color={statusPanel.valueColor} fontSize={12} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 12, background: statusPanel.valueColor + '33' }} sampleValues={sampleValues} onUpdate={updateSampleValue} />
                 ) : (
-                  <span style={{ color: statusPanel.valueColor, fontSize: 14 }}>{SAMPLE_VALUES[f.name] || '示例值'}</span>
+                  <EditableValue fieldName={f.name} value={getSample(f.name)} color={statusPanel.valueColor} fontSize={14} sampleValues={sampleValues} onUpdate={updateSampleValue} />
                 )}
               </div>
             ))}
@@ -177,7 +175,7 @@ export const StatusPanelTab = () => {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '4px 8px' }}>
             {gFields.map(f => (
               <span key={f.id} style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 12, background: statusPanel.valueColor + '22', color: statusPanel.valueColor, fontSize: 12 }}>
-                {f.name}: {SAMPLE_VALUES[f.name] || '示例值'}
+                {f.name}: <EditableValue fieldName={f.name} value={getSample(f.name)} color={statusPanel.valueColor} fontSize={12} sampleValues={sampleValues} onUpdate={updateSampleValue} />
               </span>
             ))}
           </div>
@@ -186,7 +184,7 @@ export const StatusPanelTab = () => {
             {gFields.map(f => (
               <div key={f.id} style={{ textAlign: 'center', padding: 8 }}>
                 <div style={{ color: statusPanel.labelColor, fontSize: 12, marginBottom: 4 }}>{f.name}</div>
-                <div style={{ color: statusPanel.valueColor, fontSize: 22, fontWeight: 'bold' }}>{SAMPLE_VALUES[f.name] || '示例值'}</div>
+                <EditableValue fieldName={f.name} value={getSample(f.name)} color={statusPanel.valueColor} fontSize={22} style={{ fontWeight: 'bold' }} sampleValues={sampleValues} onUpdate={updateSampleValue} />
               </div>
             ))}
           </div>
@@ -197,9 +195,7 @@ export const StatusPanelTab = () => {
               <div key={f.id} style={{ padding: '6px 8px', textAlign: 'center' }}>
                 <div style={{ fontSize: 12, color: statusPanel.labelColor, marginBottom: 2 }}>{f.name}</div>
                 {f.type === 'badge' ? (
-                  <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 12, background: statusPanel.valueColor + '33', color: statusPanel.valueColor, fontSize: 12 }}>
-                    {SAMPLE_VALUES[f.name] || '示例值'}
-                  </span>
+                  <EditableValue fieldName={f.name} value={getSample(f.name)} color={statusPanel.valueColor} fontSize={12} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 12, background: statusPanel.valueColor + '33' }} sampleValues={sampleValues} onUpdate={updateSampleValue} />
                 ) : f.type === 'progress' ? (
                   <div>
                     <div style={{ width: '100%', height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)' }}>
@@ -208,9 +204,7 @@ export const StatusPanelTab = () => {
                     <span style={{ color: statusPanel.valueColor, fontSize: 11 }}>60%</span>
                   </div>
                 ) : (
-                  <span style={{ color: statusPanel.valueColor, fontSize: 14 }}>
-                    {SAMPLE_VALUES[f.name] || '示例值'}
-                  </span>
+                  <EditableValue fieldName={f.name} value={getSample(f.name)} color={statusPanel.valueColor} fontSize={14} sampleValues={sampleValues} onUpdate={updateSampleValue} />
                 )}
               </div>
             ))}
