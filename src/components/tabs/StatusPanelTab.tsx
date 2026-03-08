@@ -1,15 +1,53 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAppStore } from '@/stores/useAppStore';
 import { ColorPicker } from '@/components/shared/ColorPicker';
 import { SliderWithLabel } from '@/components/shared/SliderWithLabel';
 import type { StatusField, GroupLayout } from '@/types';
 
-const SAMPLE_VALUES: Record<string, string> = {
+export const DEFAULT_SAMPLE_VALUES: Record<string, string> = {
   '时间': '傍晚', '地点': '学校走廊', '服装': '校服', '心情': '开心',
   '生命值': '80', '魔力': '45', '体力': '60', '金币': '120',
   '装备': '铁剑', '状态': '正常', '技能': '火球术',
 };
+
+/** Inline-editable value cell for preview */
+function EditableValue({ fieldName, value, color, fontSize, style, sampleValues, onUpdate }: {
+  fieldName: string; value: string; color: string; fontSize: number;
+  style?: React.CSSProperties; sampleValues: Record<string, string>;
+  onUpdate: (name: string, val: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  const commit = useCallback(() => {
+    setEditing(false);
+    onUpdate(fieldName, draft);
+  }, [fieldName, draft, onUpdate]);
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={e => e.key === 'Enter' && commit()}
+        style={{ ...style, color, fontSize, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 4, padding: '1px 4px', outline: 'none', width: '100%', textAlign: 'inherit' }}
+      />
+    );
+  }
+
+  return (
+    <span
+      onDoubleClick={() => { setDraft(value); setEditing(true); }}
+      style={{ ...style, color, fontSize, cursor: 'default' }}
+      title="双击编辑示例值"
+    >
+      {value}
+    </span>
+  );
+}
 
 const LAYOUT_OPTIONS: { value: GroupLayout; label: string }[] = [
   { value: 'grid', label: '网格平铺' },
@@ -55,6 +93,13 @@ export const StatusPanelTab = () => {
   const { statusPanel, updateStatusPanel, addField, updateField, removeField, getGroupConfig, updateGroupConfig } = useAppStore();
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [showStyleSettings, setShowStyleSettings] = useState(false);
+  const [sampleValues, setSampleValues] = useState<Record<string, string>>({ ...DEFAULT_SAMPLE_VALUES });
+
+  const updateSampleValue = useCallback((name: string, val: string) => {
+    setSampleValues(prev => ({ ...prev, [name]: val }));
+  }, []);
+
+  const getSample = (name: string) => sampleValues[name] || DEFAULT_SAMPLE_VALUES[name] || '示例值';
 
   const toggleGroup = (g: string) => {
     setCollapsedGroups(prev => {
@@ -119,11 +164,9 @@ export const StatusPanelTab = () => {
               <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 8px' }}>
                 <span style={{ color: statusPanel.labelColor, fontSize: 13 }}>{f.name}</span>
                 {f.type === 'badge' ? (
-                  <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 12, background: statusPanel.valueColor + '33', color: statusPanel.valueColor, fontSize: 12 }}>
-                    {SAMPLE_VALUES[f.name] || '示例值'}
-                  </span>
+                  <EditableValue fieldName={f.name} value={getSample(f.name)} color={statusPanel.valueColor} fontSize={12} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 12, background: statusPanel.valueColor + '33' }} sampleValues={sampleValues} onUpdate={updateSampleValue} />
                 ) : (
-                  <span style={{ color: statusPanel.valueColor, fontSize: 14 }}>{SAMPLE_VALUES[f.name] || '示例值'}</span>
+                  <EditableValue fieldName={f.name} value={getSample(f.name)} color={statusPanel.valueColor} fontSize={14} sampleValues={sampleValues} onUpdate={updateSampleValue} />
                 )}
               </div>
             ))}
@@ -132,7 +175,7 @@ export const StatusPanelTab = () => {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '4px 8px' }}>
             {gFields.map(f => (
               <span key={f.id} style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 12, background: statusPanel.valueColor + '22', color: statusPanel.valueColor, fontSize: 12 }}>
-                {f.name}: {SAMPLE_VALUES[f.name] || '示例值'}
+                {f.name}: <EditableValue fieldName={f.name} value={getSample(f.name)} color={statusPanel.valueColor} fontSize={12} sampleValues={sampleValues} onUpdate={updateSampleValue} />
               </span>
             ))}
           </div>
@@ -141,7 +184,7 @@ export const StatusPanelTab = () => {
             {gFields.map(f => (
               <div key={f.id} style={{ textAlign: 'center', padding: 8 }}>
                 <div style={{ color: statusPanel.labelColor, fontSize: 12, marginBottom: 4 }}>{f.name}</div>
-                <div style={{ color: statusPanel.valueColor, fontSize: 22, fontWeight: 'bold' }}>{SAMPLE_VALUES[f.name] || '示例值'}</div>
+                <EditableValue fieldName={f.name} value={getSample(f.name)} color={statusPanel.valueColor} fontSize={22} style={{ fontWeight: 'bold' }} sampleValues={sampleValues} onUpdate={updateSampleValue} />
               </div>
             ))}
           </div>
@@ -152,9 +195,7 @@ export const StatusPanelTab = () => {
               <div key={f.id} style={{ padding: '6px 8px', textAlign: 'center' }}>
                 <div style={{ fontSize: 12, color: statusPanel.labelColor, marginBottom: 2 }}>{f.name}</div>
                 {f.type === 'badge' ? (
-                  <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 12, background: statusPanel.valueColor + '33', color: statusPanel.valueColor, fontSize: 12 }}>
-                    {SAMPLE_VALUES[f.name] || '示例值'}
-                  </span>
+                  <EditableValue fieldName={f.name} value={getSample(f.name)} color={statusPanel.valueColor} fontSize={12} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 12, background: statusPanel.valueColor + '33' }} sampleValues={sampleValues} onUpdate={updateSampleValue} />
                 ) : f.type === 'progress' ? (
                   <div>
                     <div style={{ width: '100%', height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)' }}>
@@ -163,9 +204,7 @@ export const StatusPanelTab = () => {
                     <span style={{ color: statusPanel.valueColor, fontSize: 11 }}>60%</span>
                   </div>
                 ) : (
-                  <span style={{ color: statusPanel.valueColor, fontSize: 14 }}>
-                    {SAMPLE_VALUES[f.name] || '示例值'}
-                  </span>
+                  <EditableValue fieldName={f.name} value={getSample(f.name)} color={statusPanel.valueColor} fontSize={14} sampleValues={sampleValues} onUpdate={updateSampleValue} />
                 )}
               </div>
             ))}
@@ -323,7 +362,7 @@ export const StatusPanelTab = () => {
               renderGroupPreview(groupName, gFields, i === orderedGroups.length - 1)
             )}
           </div>
-          <div className="text-center text-xs text-muted-foreground mt-4 pt-3 border-t border-border">预览效果</div>
+          <div className="text-center text-xs text-muted-foreground mt-4 pt-3 border-t border-border">预览效果 · 双击字段值可编辑</div>
         </div>
       </div>
     </div>
