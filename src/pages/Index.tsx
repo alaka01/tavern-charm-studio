@@ -1,12 +1,13 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
-import { WelcomeModal } from '@/components/layout/WelcomeModal';
+import { WelcomeFlow } from '@/components/layout/WelcomeFlow';
 import { DialogBubbleTab } from '@/components/tabs/DialogBubbleTab';
 import { StatusPanelTab } from '@/components/tabs/StatusPanelTab';
 import { TextEffectTab } from '@/components/tabs/TextEffectTab';
 import { FlipCardTab } from '@/components/tabs/FlipCardTab';
 import { FormatPromptTab } from '@/components/tabs/FormatPromptTab';
 import { ExportCenter } from '@/components/tabs/ExportCenter';
+import { GuideTab } from '@/components/tabs/GuideTab';
 import { RegexPreviewPanel } from '@/components/shared/RegexPreviewPanel';
 import { useAppStore } from '@/stores/useAppStore';
 
@@ -17,6 +18,7 @@ const TAB_COMPONENTS = {
   flipCard: FlipCardTab,
   formatPrompt: FormatPromptTab,
   export: ExportCenter,
+  guide: GuideTab,
 } as const;
 
 const Index = () => {
@@ -26,7 +28,7 @@ const Index = () => {
   return (
     <div className="min-h-screen relative">
       <div className="stars-bg" />
-      <WelcomeModal />
+      <WelcomeFlow />
       <Header />
       <main className="pt-20 pb-8 px-4 max-w-7xl mx-auto relative z-10">
         <AnimatePresence mode="wait">
