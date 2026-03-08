@@ -1,5 +1,34 @@
 # 更新记录
 
+## v0.4.0 — 第 2 轮功能优化（2026-03-08）
+
+### 改动内容
+- **配置持久化**：使用 Zustand `persist` 中间件 + localStorage（key: `tavern-charm-config`），刷新页面自动恢复所有配置，排除 `activeTab`
+- **设置抽屉**：Header 右侧新增齿轮图标，打开底部抽屉提供：
+  - 导出配置（JSON 文件备份）
+  - 导入配置（从 JSON 恢复）
+  - 重置为默认配置（需二次确认）
+- **配置简化 — 对话气泡**：卡片样式详细设置和文字样式折叠为「高级选项」，默认收起，标注「可选 · 不调整也能正常使用」
+- **配置简化 — 状态面板**：新增 3 套快速模板按钮（🎮 RPG 冒险、🏫 校园日常、🧙 奇幻世界），一键填充字段列表；样式设置折叠为可选面板
+- **配置简化 — 翻页卡片**：标签配置区增加说明文字；自定义调整面板标注「高级 · 预设已够用」；卡片样式控件合并进自定义调整面板
+- **TabId 类型修复**：`'guide'` 已包含在 TabId 联合类型中
+
+### 遇到的问题
+- `useAppStore` 未加 `persist` 中间件导致刷新丢失所有配置，是第 1 轮最关键的遗漏
+- `partialize` 需要排除函数和 `activeTab`，只持久化纯数据字段
+- 对话气泡和状态面板的高级选项默认展开导致新用户认知负担重
+
+### 涉及文件
+- `src/stores/useAppStore.ts` — 添加 persist、resetToDefaults、exportConfig、importConfig
+- `src/components/layout/Header.tsx` — 集成 SettingsDrawer
+- `src/components/layout/SettingsDrawer.tsx` — 新建设置抽屉组件
+- `src/components/tabs/DialogBubbleTab.tsx` — 高级选项折叠
+- `src/components/tabs/StatusPanelTab.tsx` — 快速模板 + 样式折叠
+- `src/components/tabs/FlipCardTab.tsx` — 标签说明文字 + 面板整合
+
+---
+
+
 ## v0.3.0 — 翻页卡片背景方案重构（2026-03-08）
 
 ### 改动内容
