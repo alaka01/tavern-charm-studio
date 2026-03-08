@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { TabId, CharacterConfig, StatusPanelConfig, StatusField, TextEffectRule, FlipCardConfig, ExportSettings, FormatPromptConfig, FormatPromptCharacter, GroupConfig, TypographyConfig, TypographyPreset } from '@/types';
 
 const uuid = () => crypto.randomUUID();
@@ -143,6 +144,22 @@ const defaultFlipCard = (): FlipCardConfig => ({
   typography: { ...TYPOGRAPHY_PRESETS.claude },
 });
 
+const defaultExportSettings = (): ExportSettings => ({
+  placement: [2], markdownOnly: true, runOnEdit: true,
+});
+
+const defaultFormatPrompt = (): FormatPromptConfig => ({
+  language: 'en',
+  tone: 'strict',
+  placementSuggestion: 'system',
+  characters: [],
+  useFlipCard: true,
+  paragraphSeparator: 'pipe',
+  customSeparator: '',
+  useFloorCounter: true,
+  floorStartNumber: 0,
+});
+
 interface AppState {
   activeTab: TabId;
   setActiveTab: (tab: TabId) => void;
@@ -176,127 +193,176 @@ interface AppState {
   addFormatPromptChar: (name: string) => void;
   removeFormatPromptChar: (name: string) => void;
   syncFormatPromptChars: () => void;
+  resetToDefaults: () => void;
+  exportConfig: () => string;
+  importConfig: (json: string) => boolean;
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
-  activeTab: 'dialog',
-  setActiveTab: (tab) => set({ activeTab: tab }),
+export const useAppStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      activeTab: 'dialog' as TabId,
+      setActiveTab: (tab) => set({ activeTab: tab }),
 
-  characters: [defaultCharacter(0)],
-  addCharacter: () => set((s) => ({ characters: [...s.characters, defaultCharacter(s.characters.length)] })),
-  updateCharacter: (id, updates) => set((s) => ({
-    characters: s.characters.map(c => c.id === id ? { ...c, ...updates } : c),
-  })),
-  removeCharacter: (id) => set((s) => ({
-    characters: s.characters.filter(c => c.id !== id),
-  })),
-  setCharacters: (chars) => set({ characters: chars }),
+      characters: [defaultCharacter(0)],
+      addCharacter: () => set((s) => ({ characters: [...s.characters, defaultCharacter(s.characters.length)] })),
+      updateCharacter: (id, updates) => set((s) => ({
+        characters: s.characters.map(c => c.id === id ? { ...c, ...updates } : c),
+      })),
+      removeCharacter: (id) => set((s) => ({
+        characters: s.characters.filter(c => c.id !== id),
+      })),
+      setCharacters: (chars) => set({ characters: chars }),
 
-  statusPanel: defaultStatusPanel(),
-  updateStatusPanel: (updates) => set((s) => ({
-    statusPanel: { ...s.statusPanel, ...updates },
-  })),
-  addField: () => set((s) => ({
-    statusPanel: { ...s.statusPanel, fields: [...s.statusPanel.fields, defaultField()] },
-  })),
-  updateField: (id, updates) => set((s) => {
-    const newFields = s.statusPanel.fields.map(f => f.id === id ? { ...f, ...updates } : f);
-    // Auto-update groupOrder when a new group appears
-    const allGroups = new Set(newFields.map(f => f.group));
-    const existingOrder = s.statusPanel.groupOrder || [];
-    const newOrder = [...existingOrder.filter(g => allGroups.has(g))];
-    allGroups.forEach(g => { if (!newOrder.includes(g)) newOrder.push(g); });
-    return {
-      statusPanel: { ...s.statusPanel, fields: newFields, groupOrder: newOrder },
-    };
-  }),
-  removeField: (id) => set((s) => ({
-    statusPanel: {
-      ...s.statusPanel,
-      fields: s.statusPanel.fields.filter(f => f.id !== id),
-    },
-  })),
-  setStatusPanel: (config) => set({ statusPanel: config }),
-  getGroupConfig: (group) => {
-    return get().statusPanel.groupConfigs[group] || defaultGroupConfig();
-  },
-  updateGroupConfig: (group, updates) => set((s) => ({
-    statusPanel: {
-      ...s.statusPanel,
-      groupConfigs: {
-        ...s.statusPanel.groupConfigs,
-        [group]: { ...(s.statusPanel.groupConfigs[group] || defaultGroupConfig()), ...updates },
+      statusPanel: defaultStatusPanel(),
+      updateStatusPanel: (updates) => set((s) => ({
+        statusPanel: { ...s.statusPanel, ...updates },
+      })),
+      addField: () => set((s) => ({
+        statusPanel: { ...s.statusPanel, fields: [...s.statusPanel.fields, defaultField()] },
+      })),
+      updateField: (id, updates) => set((s) => {
+        const newFields = s.statusPanel.fields.map(f => f.id === id ? { ...f, ...updates } : f);
+        const allGroups = new Set(newFields.map(f => f.group));
+        const existingOrder = s.statusPanel.groupOrder || [];
+        const newOrder = [...existingOrder.filter(g => allGroups.has(g))];
+        allGroups.forEach(g => { if (!newOrder.includes(g)) newOrder.push(g); });
+        return {
+          statusPanel: { ...s.statusPanel, fields: newFields, groupOrder: newOrder },
+        };
+      }),
+      removeField: (id) => set((s) => ({
+        statusPanel: {
+          ...s.statusPanel,
+          fields: s.statusPanel.fields.filter(f => f.id !== id),
+        },
+      })),
+      setStatusPanel: (config) => set({ statusPanel: config }),
+      getGroupConfig: (group) => {
+        return get().statusPanel.groupConfigs[group] || defaultGroupConfig();
       },
-    },
-  })),
-  reorderGroups: (newOrder) => set((s) => ({
-    statusPanel: { ...s.statusPanel, groupOrder: newOrder },
-  })),
+      updateGroupConfig: (group, updates) => set((s) => ({
+        statusPanel: {
+          ...s.statusPanel,
+          groupConfigs: {
+            ...s.statusPanel.groupConfigs,
+            [group]: { ...(s.statusPanel.groupConfigs[group] || defaultGroupConfig()), ...updates },
+          },
+        },
+      })),
+      reorderGroups: (newOrder) => set((s) => ({
+        statusPanel: { ...s.statusPanel, groupOrder: newOrder },
+      })),
 
-  textEffects: [defaultTextEffect()],
-  addTextEffect: () => set((s) => ({ textEffects: [...s.textEffects, defaultTextEffect()] })),
-  updateTextEffect: (id, updates) => set((s) => ({
-    textEffects: s.textEffects.map(e => e.id === id ? { ...e, ...updates } : e),
-  })),
-  removeTextEffect: (id) => set((s) => ({
-    textEffects: s.textEffects.filter(e => e.id !== id),
-  })),
-  setTextEffects: (effects) => set({ textEffects: effects }),
+      textEffects: [defaultTextEffect()],
+      addTextEffect: () => set((s) => ({ textEffects: [...s.textEffects, defaultTextEffect()] })),
+      updateTextEffect: (id, updates) => set((s) => ({
+        textEffects: s.textEffects.map(e => e.id === id ? { ...e, ...updates } : e),
+      })),
+      removeTextEffect: (id) => set((s) => ({
+        textEffects: s.textEffects.filter(e => e.id !== id),
+      })),
+      setTextEffects: (effects) => set({ textEffects: effects }),
 
-  flipCard: defaultFlipCard(),
-  updateFlipCard: (updates) => set((s) => ({
-    flipCard: { ...s.flipCard, ...updates },
-  })),
-  setFlipCard: (config) => set({ flipCard: config }),
+      flipCard: defaultFlipCard(),
+      updateFlipCard: (updates) => set((s) => ({
+        flipCard: { ...s.flipCard, ...updates },
+      })),
+      setFlipCard: (config) => set({ flipCard: config }),
 
-  exportSettings: { placement: [2], markdownOnly: true, runOnEdit: true },
-  updateExportSettings: (updates) => set((s) => ({
-    exportSettings: { ...s.exportSettings, ...updates },
-  })),
+      exportSettings: defaultExportSettings(),
+      updateExportSettings: (updates) => set((s) => ({
+        exportSettings: { ...s.exportSettings, ...updates },
+      })),
 
-  formatPrompt: {
-    language: 'en',
-    tone: 'strict',
-    placementSuggestion: 'system',
-    characters: [],
-    useFlipCard: true,
-    paragraphSeparator: 'pipe',
-    customSeparator: '',
-    useFloorCounter: true,
-    floorStartNumber: 0,
-  },
-  updateFormatPrompt: (updates) => set((s) => ({
-    formatPrompt: { ...s.formatPrompt, ...updates },
-  })),
-  updateFormatPromptChar: (name, updates) => set((s) => ({
-    formatPrompt: {
-      ...s.formatPrompt,
-      characters: s.formatPrompt.characters.map(c => c.name === name ? { ...c, ...updates } : c),
-    },
-  })),
-  addFormatPromptChar: (name) => set((s) => ({
-    formatPrompt: {
-      ...s.formatPrompt,
-      characters: [...s.formatPrompt.characters, { name, needDialog: true, needStatus: true }],
-    },
-  })),
-  removeFormatPromptChar: (name) => set((s) => ({
-    formatPrompt: {
-      ...s.formatPrompt,
-      characters: s.formatPrompt.characters.filter(c => c.name !== name),
-    },
-  })),
-  syncFormatPromptChars: () => set((s) => {
-    const names = new Set<string>();
-    s.characters.forEach(c => { if (c.name) names.add(c.name); });
-    const existing = new Map(s.formatPrompt.characters.map(c => [c.name, c]));
-    const merged: FormatPromptCharacter[] = [];
-    names.forEach(name => {
-      merged.push(existing.get(name) || { name, needDialog: true, needStatus: true });
-    });
-    s.formatPrompt.characters.forEach(c => {
-      if (!names.has(c.name)) merged.push(c);
-    });
-    return { formatPrompt: { ...s.formatPrompt, characters: merged } };
-  }),
-}));
+      formatPrompt: defaultFormatPrompt(),
+      updateFormatPrompt: (updates) => set((s) => ({
+        formatPrompt: { ...s.formatPrompt, ...updates },
+      })),
+      updateFormatPromptChar: (name, updates) => set((s) => ({
+        formatPrompt: {
+          ...s.formatPrompt,
+          characters: s.formatPrompt.characters.map(c => c.name === name ? { ...c, ...updates } : c),
+        },
+      })),
+      addFormatPromptChar: (name) => set((s) => ({
+        formatPrompt: {
+          ...s.formatPrompt,
+          characters: [...s.formatPrompt.characters, { name, needDialog: true, needStatus: true }],
+        },
+      })),
+      removeFormatPromptChar: (name) => set((s) => ({
+        formatPrompt: {
+          ...s.formatPrompt,
+          characters: s.formatPrompt.characters.filter(c => c.name !== name),
+        },
+      })),
+      syncFormatPromptChars: () => set((s) => {
+        const names = new Set<string>();
+        s.characters.forEach(c => { if (c.name) names.add(c.name); });
+        const existing = new Map(s.formatPrompt.characters.map(c => [c.name, c]));
+        const merged: FormatPromptCharacter[] = [];
+        names.forEach(name => {
+          merged.push(existing.get(name) || { name, needDialog: true, needStatus: true });
+        });
+        s.formatPrompt.characters.forEach(c => {
+          if (!names.has(c.name)) merged.push(c);
+        });
+        return { formatPrompt: { ...s.formatPrompt, characters: merged } };
+      }),
+
+      resetToDefaults: () => set({
+        characters: [defaultCharacter(0)],
+        statusPanel: defaultStatusPanel(),
+        textEffects: [defaultTextEffect()],
+        flipCard: defaultFlipCard(),
+        exportSettings: defaultExportSettings(),
+        formatPrompt: defaultFormatPrompt(),
+      }),
+
+      exportConfig: () => {
+        const s = get();
+        return JSON.stringify({
+          characters: s.characters,
+          statusPanel: s.statusPanel,
+          textEffects: s.textEffects,
+          flipCard: s.flipCard,
+          exportSettings: s.exportSettings,
+          formatPrompt: s.formatPrompt,
+        }, null, 2);
+      },
+
+      importConfig: (json: string) => {
+        try {
+          const data = JSON.parse(json);
+          const updates: Partial<AppState> = {};
+          if (data.characters) updates.characters = data.characters;
+          if (data.statusPanel) updates.statusPanel = data.statusPanel;
+          if (data.textEffects) updates.textEffects = data.textEffects;
+          if (data.flipCard) updates.flipCard = data.flipCard;
+          if (data.exportSettings) updates.exportSettings = data.exportSettings;
+          if (data.formatPrompt) updates.formatPrompt = data.formatPrompt;
+          set(updates);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+    }),
+    {
+      name: 'tavern-charm-config',
+      partialize: (state) => {
+        const { activeTab, ...rest } = state;
+        // Only persist data, not functions or activeTab
+        return {
+          characters: rest.characters,
+          statusPanel: rest.statusPanel,
+          textEffects: rest.textEffects,
+          flipCard: rest.flipCard,
+          exportSettings: rest.exportSettings,
+          formatPrompt: rest.formatPrompt,
+        };
+      },
+    }
+  )
+);
