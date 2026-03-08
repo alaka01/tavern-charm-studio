@@ -28,7 +28,7 @@ const Index = () => {
   return (
     <div className="min-h-screen relative">
       <div className="stars-bg" />
-      <WelcomeModal />
+      <WelcomeFlow />
       <Header />
       <main className="pt-20 pb-8 px-4 max-w-7xl mx-auto relative z-10">
         <AnimatePresence mode="wait">
