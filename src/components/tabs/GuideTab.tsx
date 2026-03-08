@@ -78,6 +78,16 @@ export const GuideTab = () => {
             一句话总结：<span className="text-accent">提示词</span>让 AI 输出「原料」，<span className="text-primary">正则</span>把「原料」变成「成品」。
           </p>
         </div>
+
+        <div className="border-l-4 rounded-lg p-4 space-y-1" style={{ borderColor: '#facc15', background: 'rgba(250,204,21,0.1)' }}>
+          <p className="text-sm font-semibold text-foreground">⚠️ 重要：纯 CSS 限制</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            SillyTavern 的正则渲染环境<strong>不执行 JavaScript</strong>。所有交互效果（如翻页、展开收起、选项切换）必须使用纯 CSS 实现（利用{' '}
+            <code className="font-mono bg-muted/30 px-1 rounded">&lt;input type="checkbox"&gt;</code> /{' '}
+            <code className="font-mono bg-muted/30 px-1 rounded">&lt;input type="radio"&gt;</code>{' '}
+            + CSS <code className="font-mono bg-muted/30 px-1 rounded">:checked</code> 选择器的 hack 技巧）。本工具生成的所有脚本均遵循此限制。
+          </p>
+        </div>
       </section>
 
       {/* Import steps */}

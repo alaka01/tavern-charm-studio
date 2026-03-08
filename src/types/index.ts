@@ -1,4 +1,4 @@
-export type TabId = 'dialog' | 'status' | 'textEffect' | 'flipCard' | 'formatPrompt' | 'export' | 'guide';
+export type TabId = 'dialog' | 'status' | 'textEffect' | 'flipCard' | 'formatPrompt' | 'export' | 'guide' | 'regexTest';
 export type PromptLanguage = 'en' | 'zh' | 'bilingual';
 export type PromptTone = 'strict' | 'gentle' | 'concise';
 export type PlacementSuggestion = 'system' | 'author_note' | 'world_info';

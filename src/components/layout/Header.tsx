@@ -10,6 +10,7 @@ const TABS: { id: TabId; icon: string; label: string }[] = [
   { id: 'textEffect', icon: '✨', label: '文字特效' },
   { id: 'flipCard', icon: '📑', label: '翻页卡片' },
   { id: 'formatPrompt', icon: '📝', label: '格式提示词' },
+  { id: 'regexTest', icon: '🧪', label: '正则测试' },
   { id: 'export', icon: '📦', label: '导出中心' },
   { id: 'guide', icon: '📖', label: '使用说明' },
 ];
