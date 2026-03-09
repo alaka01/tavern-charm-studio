@@ -190,17 +190,18 @@ export const FullPreviewOverlay = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center"
+        className="fixed inset-0 z-50 overflow-y-auto"
         style={{ background: '#1a1c2e' }}
       >
         <button
           onClick={() => setOpen(false)}
-          className="absolute top-4 right-4 z-10 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 text-foreground transition-colors"
+          className="fixed top-4 right-4 z-10 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 text-foreground transition-colors"
         >
           <X size={20} />
         </button>
 
-        <div className="w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="min-h-full flex items-center justify-center p-4">
+        <div className="w-full max-w-2xl">
           <div className="text-center text-xs text-muted-foreground mb-4">完整预览 · 模拟 SillyTavern 显示效果 · 点击卡片翻面</div>
 
           <motion.div
