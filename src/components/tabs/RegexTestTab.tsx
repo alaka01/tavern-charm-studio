@@ -22,9 +22,9 @@ function parseRegex(regexStr: string): RegExp | null {
 function generateSampleText(store: ReturnType<typeof useAppStore.getState>): string {
   const char = store.characters[0];
   const charName = char?.name || '角色';
-  let text = '';
+  const flipCard = store.flipCard;
+  const fields = store.statusPanel.fields;
 
-  // Build dialog based on character's trigger format
   const fmt = char?.triggerFormat || 'braces_cn';
   const wrap = (name: string, content: string) => {
     switch (fmt) {
@@ -36,23 +36,29 @@ function generateSampleText(store: ReturnType<typeof useAppStore.getState>): str
     }
   };
 
+  let text = '';
+  text += `<${flipCard.frontTag}>\n`;
   text += `${wrap(charName, '你好啊，今天天气真不错呢。')}\n\n`;
   text += `*她微微一笑，轻轻点了点头。*\n\n`;
   text += `（阳光透过窗帘洒落在桌面上，空气中弥漫着咖啡的香气。）\n\n`;
-  text += `${wrap(charName, '要不要一起去散步？')}\n\n`;
+  text += `${wrap(charName, '要不要一起去散步？')}\n`;
+  text += `</${flipCard.frontTag}>\n`;
 
-  // Status panel
-  const fields = store.statusPanel.fields;
   if (fields.length > 0) {
     const sampleValues: Record<string, string> = {
-      '时间': '傍晚', '地点': '花园', '心情': '愉悦', '生命值': '80%',
-      '服装': '白色连衣裙', '能量': '75%', '信用': '1200', '状态': '正常',
-      '心智': '稳定',
+      '时间': '傍晚', '地点': '花园', '心情': '愉悦', '生命值': '75/100',
+      '服装': '白色连衣裙', '能量': '75/100', '信用': '1200', '状态': '正常',
+      '心智': '稳定', '体力': '75/100', '魔力': '1/100', '好感度': '60/100',
+      '金币': '500', '装备': '示例值',
     };
-    const fieldValues = fields.map(f => `${f.name}：${sampleValues[f.name] || '示例值'}`).join('\n');
-    text += `${fieldValues}`;
+    text += `<${flipCard.backTag}>\n`;
+    fields.forEach(f => {
+      text += `${f.name}：${sampleValues[f.name] || '示例值'}\n`;
+    });
+    text += `</${flipCard.backTag}>\n`;
   }
 
+  text += `<${flipCard.numberTag}>0</${flipCard.numberTag}>`;
   return text;
 }
 

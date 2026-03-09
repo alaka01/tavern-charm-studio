@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const steps = [
-  { emoji: '✨', title: '欢迎来到酒馆正则美化工作室', desc: '这是一个可视化工具，帮助你为 SillyTavern 角色卡生成精美的正则美化脚本。\n无需编程知识！' },
+  { emoji: '✨', title: '{ emoji: '✨', title: '欢迎来到 Charm ST', desc: '这是一个可视化工具，帮助你为 SillyTavern 角色卡生成精美的正则美化脚本。\n无需编程知识！' },', desc: '这是一个可视化工具，帮助你为 SillyTavern 角色卡生成精美的正则美化脚本。\n无需编程知识！' },
   { emoji: '🎯', title: '简单三步完成', desc: '① 在各标签页中配置你想要的样式\n② 实时预览效果\n③ 一键导出 JSON 正则脚本' },
   { emoji: '🚀', title: '准备好了吗？', desc: '导出的脚本可直接导入 SillyTavern 使用。\n让我们开始美化你的角色卡吧！' },
 ];

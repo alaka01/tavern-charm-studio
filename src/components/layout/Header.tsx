@@ -23,7 +23,7 @@ export const Header = () => {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center h-14 gap-4">
           <h1 className="text-sm font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent hidden md:block whitespace-nowrap">
-            酒馆正则美化工作室
+            Charm ST
           </h1>
           <nav className="flex gap-0.5 overflow-x-auto flex-1 scrollbar-none">
             {TABS.map(tab => (

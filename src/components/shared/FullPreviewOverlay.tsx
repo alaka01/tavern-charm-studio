@@ -129,13 +129,27 @@ function StatusPanelPreview({ config }: { config: StatusPanelConfig }) {
                 {gFields.map(f => (
                   <div key={f.id} style={{ padding: '6px 8px', textAlign: 'center' }}>
                     <div style={{ fontSize: 12, color: config.labelColor, marginBottom: 2 }}>{f.name}</div>
-                    {f.type === 'progress' ? (
-                      <div>
-                        <div style={{ width: '100%', height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)' }}>
-                          <div style={{ width: '60%', height: '100%', borderRadius: 3, background: config.valueColor }} />
+                    {f.type === 'progress' ? (() => {
+                      const val = DEFAULT_SAMPLE_VALUES[f.name] || '50%';
+                      let pct = 50;
+                      if (val.includes('/')) {
+                        const parts = val.split('/');
+                        const num = parseInt(parts[0]);
+                        const den = parseInt(parts[1]);
+                        if (den > 0) pct = Math.round((num / den) * 100);
+                      } else {
+                        const num = parseInt(val);
+                        if (!isNaN(num)) pct = Math.min(100, num);
+                      }
+                      return (
+                        <div>
+                          <div style={{ width: '100%', height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)' }}>
+                            <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: config.valueColor }} />
+                          </div>
+                          <span style={{ color: config.valueColor, fontSize: 11 }}>{val}</span>
                         </div>
-                        <span style={{ color: config.valueColor, fontSize: 11 }}>60%</span>
-                      </div>
+                      );
+                    })()
                     ) : f.type === 'badge' ? (
                       <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 12, background: config.valueColor + '33', color: config.valueColor, fontSize: 12 }}>{DEFAULT_SAMPLE_VALUES[f.name] || '示例值'}</span>
                     ) : (

@@ -1,4 +1,4 @@
-# 更新记录
+# Charm ST 更新记录
 
 ## v0.4.0 (2026-03-08)
 
@@ -11,6 +11,9 @@
 - 正则测试页替换逻辑统一使用 `g` flag，匹配计数与实际替换结果一致
 - 正则脚本构建函数增加 try/catch 防御，单条脚本异常不会导致整个测试页崩溃
 - 手账风状态面板 bgColor 从 CSS gradient 改为纯色 `#fff5f5`，兼容 `background-color` 渲染
+- 全量预览覆盖层改为 `fixed inset-0 overflow-y-auto`，底部不再透出页面内容
+- 正则测试示例文本增加翻页标签（frontTag / backTag / numberTag）包裹
+- 预览中进度条根据示例值动态计算百分比，不再写死 60%
 
 ## v0.3.0 (2026-03-08)
 

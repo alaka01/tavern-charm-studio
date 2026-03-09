@@ -1,6 +1,6 @@
-# 酒馆正则美化工作室 (Tavern Charm Studio)
+# Charm ST
 
-可视化配置工具，为 SillyTavern 生成正则美化脚本和格式提示词。无需手写正则，点击配置即可导出。
+为 SillyTavern 生成正则美化脚本和格式提示词的可视化工具。
 
 ## 功能
 
@@ -26,13 +26,13 @@
 
 ### Vercel 一键部署
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/alaka01/tavern-charm-studio)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/alaka01/charm-st)
 
 ### 本地运行
 
 ```bash
-git clone https://github.com/alaka01/tavern-charm-studio.git
-cd tavern-charm-studio
+git clone https://github.com/alaka01/charm-st.git
+cd charm-st
 npm install
 npm run dev
 ```
@@ -40,8 +40,8 @@ npm run dev
 ### Docker
 
 ```bash
-docker build -t tavern-charm-studio .
-docker run -d -p 8080:80 tavern-charm-studio
+docker build -t charm-st .
+docker run -d -p 8080:80 charm-st
 ```
 
 访问 http://localhost:8080
